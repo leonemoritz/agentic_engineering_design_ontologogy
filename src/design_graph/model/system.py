@@ -23,6 +23,19 @@ from design_graph.model.elements import (
     VerificationCase,
     digest,
 )
+from design_graph.model.engineering import (
+    Allowable,
+    Concept,
+    ConsistencyCheck,
+    Credibility,
+    DesignRule,
+    FailureMode,
+    LoadCase,
+    OptimizationSpec,
+    Review,
+    Statement,
+    TradeStudy,
+)
 
 _COLLECTIONS = (
     "principals",
@@ -36,6 +49,18 @@ _COLLECTIONS = (
     "evidence",
     "approvals",
     "baselines",
+    # engineering elements (design_graph.model.engineering)
+    "statements",
+    "design_rules",
+    "concepts",
+    "trade_studies",
+    "load_cases",
+    "failure_modes",
+    "optimizations",
+    "allowables",
+    "credibility",
+    "reviews",
+    "consistency_checks",
 )
 
 
@@ -58,6 +83,17 @@ class SystemModel(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     approvals: list[Approval] = Field(default_factory=list)
     baselines: list[Baseline] = Field(default_factory=list)
+    statements: list[Statement] = Field(default_factory=list)
+    design_rules: list[DesignRule] = Field(default_factory=list)
+    concepts: list[Concept] = Field(default_factory=list)
+    trade_studies: list[TradeStudy] = Field(default_factory=list)
+    load_cases: list[LoadCase] = Field(default_factory=list)
+    failure_modes: list[FailureMode] = Field(default_factory=list)
+    optimizations: list[OptimizationSpec] = Field(default_factory=list)
+    allowables: list[Allowable] = Field(default_factory=list)
+    credibility: list[Credibility] = Field(default_factory=list)
+    reviews: list[Review] = Field(default_factory=list)
+    consistency_checks: list[ConsistencyCheck] = Field(default_factory=list)
 
     def elements(self) -> dict[str, BaseModel]:
         """Every identified element; later duplicates are reported by validation, not here."""

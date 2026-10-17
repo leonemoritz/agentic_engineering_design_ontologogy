@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -259,3 +260,123 @@ def model_import_cards(card_file: Path, subject: str, need: str, output: Path) -
     except (OSError, ValueError) as error:
         raise click.ClickException(str(error)) from error
     click.echo(f"Imported {len(model.requirements)} requirements into {output}")
+
+
+@main.group("process")
+def process_group() -> None:
+    """Process layer: stage status, open items, and agent task plans."""
+
+
+def _load_for_process(model_file: Path, template_file: Path | None) -> tuple[Any, Any]:
+    from design_graph.model import ModelError, load_model
+    from design_graph.process import DEFAULT_TEMPLATE, load_template
+
+    try:
+        model = load_model(model_file)
+        template = load_template(template_file) if template_file else DEFAULT_TEMPLATE
+    except (ModelError, OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    return model, template
+
+
+_TEMPLATE_OPTION = click.option(
+    "--template",
+    "template_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Process template YAML (default: built-in engineering-v).",
+)
+
+
+@process_group.command("status")
+@click.argument("model_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@_TEMPLATE_OPTION
+@click.option("--json", "as_json", is_flag=True, help="Emit the full status as JSON.")
+def process_status(model_file: Path, template_file: Path | None, as_json: bool) -> None:
+    """Show each stage's state and the next actions."""
+
+    from design_graph.process import evaluate_process
+
+    model, template = _load_for_process(model_file, template_file)
+    status = evaluate_process(model, template)
+    if as_json:
+        click.echo(json.dumps(status.model_dump(mode="json"), indent=2))
+        return
+    for stage in status.stages:
+        missing = f" missing={','.join(stage.missing)}" if stage.missing else ""
+        click.echo(
+            f"{stage.id:14} {stage.state:12} blocking={stage.blocking:<3} "
+            f"warnings={stage.warnings:<3} human={stage.human_blocking}{missing}"
+        )
+    click.echo("next actions:")
+    for item in status.next_actions()[:15]:
+        click.echo(f"  [{item.owner}] {item.rule} {item.element}: {item.message}")
+    click.echo(f"{len(status.human_actions)} items need a person")
+
+
+@process_group.command("open-items")
+@click.argument("model_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@_TEMPLATE_OPTION
+@click.option("--owner", help="Only items owned by this role (or 'human').")
+@click.option("--all", "include_warnings", is_flag=True, help="Include warnings.")
+def process_open_items(
+    model_file: Path, template_file: Path | None, owner: str | None, include_warnings: bool
+) -> None:
+    """List open items with stage, owner and the action to take."""
+
+    from design_graph.process import evaluate_process
+
+    model, template = _load_for_process(model_file, template_file)
+    status = evaluate_process(model, template)
+    items = [
+        i
+        for i in status.items
+        if (include_warnings or i.severity == "blocking") and (owner is None or i.owner == owner)
+    ]
+    for item in sorted(items, key=lambda i: (template.order(i.stage), i.severity, i.rule)):
+        click.echo(
+            f"{item.stage:13} {item.severity:8} {item.owner:22} {item.rule:22} {item.element}"
+        )
+        click.echo(f"    {item.message}")
+        click.echo(f"    -> {item.action}")
+    click.echo(f"{len(items)} items")
+
+
+@process_group.command("plan")
+@click.argument("model_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@_TEMPLATE_OPTION
+def process_plan(model_file: Path, template_file: Path | None) -> None:
+    """Print the tasks the orchestrator would hand to each agent role next."""
+
+    from design_graph.agents import Orchestrator
+
+    model, template = _load_for_process(model_file, template_file)
+    orchestrator = Orchestrator(model, _NoBackend(), template=template)
+    tasks = orchestrator.plan()
+    for task in tasks:
+        click.echo(f"=== {task.id} ({task.role}, stage {task.stage}, author {task.author})")
+        click.echo(task.brief)
+        click.echo("")
+    click.echo(f"{len(tasks)} agent tasks; items for a person are listed by 'process status'")
+
+
+@process_group.command("roles")
+def process_roles() -> None:
+    """List the agent roles, what they may write, and their checklists."""
+
+    from design_graph.agents import DEFAULT_ROLES
+
+    for role in DEFAULT_ROLES.values():
+        click.echo(f"{role.id} ({role.kind}): {role.title}")
+        click.echo(f"    writes: {', '.join(role.writes) or '-'}")
+        for item in role.checklist:
+            click.echo(f"    - {item}")
+
+
+class _NoBackend:
+    """Planning needs no backend; executing with this one fails loudly."""
+
+    def execute(self, task: Any, model: Any) -> Any:
+        raise RuntimeError("planning only")
+
+    def review(self, task: Any, model: Any) -> Any:
+        raise RuntimeError("planning only")

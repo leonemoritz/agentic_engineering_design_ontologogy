@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: Apache-2.0
+# Synthetic process-layer example: concepts screened, sizing half done, nothing reviewed.
+format_version: 1
+principals:
+- id: author-bot
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: agent
+  roles:
+  - author
+- id: eng
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: human
+  roles:
+  - approver
+  - verifier
+  - witness
+- id: qa-bot
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: agent
+  roles:
+  - reviewer
+tools:
+- id: fem
+  name: ''
+  doc: ''
+  withdrawn: false
+  version: '1'
+  intended_use: stress
+  declared_by: eng
+needs:
+- id: N1
+  name: ''
+  doc: ''
+  withdrawn: false
+  stakeholder: customer
+  rationale: ''
+parts:
+- id: SYS
+  name: ''
+  doc: ''
+  withdrawn: false
+  parent: null
+  attributes:
+    capacity:
+      value: 600.0
+      unit: N
+    mass:
+      value: 0.3
+      unit: kg
+requirements:
+- id: R1
+  name: ''
+  doc: ''
+  withdrawn: false
+  text: The bracket shall carry at least 500 N.
+  subject: SYS
+  attribute: capacity
+  relation: ge
+  target:
+    value: 500.0
+    unit: N
+  upper: null
+  tolerance: null
+  expected: true
+  tbc: false
+cases:
+- id: C1
+  name: ''
+  doc: ''
+  withdrawn: false
+  method: A
+  level: ''
+  stage: ''
+  procedure: ''
+  tool: fem
+relationships:
+- id: r1
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: refine
+  source: R1
+  target: N1
+  rationale: ''
+- id: s1
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: satisfy
+  source: SYS
+  target: R1
+  rationale: ''
+- id: t1
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: trace
+  source: N1
+  target: S1
+  rationale: ''
+- id: v1
+  name: ''
+  doc: ''
+  withdrawn: false
+  kind: verify
+  source: C1
+  target: R1
+  rationale: ''
+statements:
+- id: S1
+  name: ''
+  doc: ''
+  withdrawn: false
+  text: The bracket must hold the shelf.
+  source: customer
+  date: null
+concepts:
+- id: CA
+  name: ''
+  doc: ''
+  withdrawn: false
+  description: ''
+- id: CB
+  name: ''
+  doc: ''
+  withdrawn: false
+  description: ''
+trade_studies:
+- id: TS1
+  name: ''
+  doc: ''
+  withdrawn: false
+  question: Which load path?
+  concepts:
+  - CA
+  - CB
+  criteria:
+  - id: G1
+    text: Fits the envelope
+    kind: gate
+    basis: computed
+    better: lower
+    derived_from:
+    - R1
+  - id: K1
+    text: Mass per newton
+    kind: criterion
+    basis: computed
+    better: lower
+    derived_from:
+    - R1
+  - id: K2
+    text: Looks robust
+    kind: criterion
+    basis: reasoned
+    better: lower
+    derived_from: []
+  scores:
+    CA:
+      G1: true
+      K1: 1.0
+    CB:
+      G1: true
+      K1: 2.0
+  selected:
+  - CA
+  rejected:
+    CB:
+    - K1
+  decided_by: null
+load_cases:
+- id: LC1
+  name: ''
+  doc: ''
+  withdrawn: false
+  description: Shelf load at the tip
+  requirements:
+  - R1
+  assumptions: []
+  loads: {}
+failure_modes:
+- id: FM1
+  name: ''
+  doc: ''
+  withdrawn: false
+  description: Bending crack at the root
+  covers:
+  - R1
+  status: modelled
+  analysis: []
+  validity: ''
+  reason: ''
+allowables:
+- id: AL1
+  name: ''
+  doc: ''
+  withdrawn: false
+  material: PLA
+  property: tensile strength
+  value:
+    value: 45.0
+    unit: MPa
+  basis: characteristic
+  source: Synthetic datasheet
+  status: datasheet
+  statistics:
+    mean: 51.0
+    sd: 3.0
+    n: null
+  knockdowns: {}

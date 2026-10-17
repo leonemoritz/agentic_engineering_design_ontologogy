@@ -23,7 +23,9 @@ ElementId = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:
 Method = Literal["A", "R", "I", "T"]
 Relation = Literal["le", "ge", "eq", "range", "bool"]
 RelationshipKind = Literal["derive", "refine", "satisfy", "verify", "allocate", "trace"]
-Role = Literal["approver", "verifier", "witness"]
+# approver, verifier, witness: human only (enforced by validation and assessment).
+# author, reviewer: may be held by agents; a review is never an approval.
+Role = Literal["approver", "verifier", "witness", "author", "reviewer"]
 
 
 def _check_date(value: str) -> str:

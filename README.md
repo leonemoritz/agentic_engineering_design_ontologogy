@@ -50,12 +50,51 @@ goes stale when the requirement, case, subject part, or declared tool changes. A
 toolchain is declared by the engineer (`ToolDeclaration`); its credibility is not assessed. See
 `docs/design/universal-design-graph.md`.
 
+## Process layer and agent roles
+
+The system model says whether a design is verified. The process layer (`design_graph.process`) says
+what is missing, which stage it belongs to, what to do, and who should do it:
+
+```sh
+dg process status examples/model_process_bracket.yaml      # stage states and next actions
+dg process open-items examples/model_process_bracket.yaml --all
+dg process plan examples/model_process_bracket.yaml        # tasks per agent role, with briefs
+dg process roles                                           # roles, write permissions, checklists
+```
+
+- **Engineering elements** (`design_graph.model.engineering`): Statement, DesignRule, Concept,
+  TradeStudy (decision checked against its scores), LoadCase, FailureMode, OptimizationSpec,
+  Allowable, Credibility, Review and ConsistencyCheck. They are optional; existing models, hashes
+  and approvals are unchanged.
+- **Stage template** (`DEFAULT_TEMPLATE`, or YAML via `--template`): requirements, concepts,
+  allowables, sizing, analysis, verification, test, each with dependencies, required content and
+  an exit criterion.
+- **Completeness and consistency rules** turn missing work into open items. Examples: a statement
+  that isn't traced; no trade study; a load-case requirement without failure modes; a tier-1 result
+  without a higher-tier comparison; a mesh that hasn't converged; an unreviewed trade study;
+  disagreeing models (for example CAD mass against sizing mass), which become a rework item at the
+  named feedback stage.
+- **Agents** (`design_graph.agents`): a manager turns open items into tasks for expert roles. The
+  orchestrator applies a proposal only if the role may write those collections and it adds no
+  validation error. An independent quality role then reviews it, seeing the changed elements but
+  not the author's reasoning. Agents can never write approvals, baselines, principals or tool
+  declarations, and a review is never an approval. Backends: `CallableBackend` (scripted) and
+  `PromptBackend` (any LLM through a `complete(system, user)` function; no SDK dependency).
+
+```python
+from design_graph.agents import Orchestrator, PromptBackend
+report = Orchestrator(model, PromptBackend(my_complete)).run()
+report.status.stages, report.records, report.human_actions
+```
+
 ## Layout
 
 ```
 src/design_graph/
   core/          domain-neutral graph engine (rules, provenance, caching)
-  model/         MBSE model, validation, assessment, baselines, graph-to-evidence bridge
+  model/         MBSE model, engineering elements, validation, assessment, baselines, evidence bridge
+  process/       stage templates, completeness and consistency rules, stage status, next actions
+  agents/        roles, orchestrator, callable and prompt backends
   engineering/   analysis rules, geometry/CAD, connectors, solver runner, decision records, controller
   interchange/   requirement import (JSON/YAML/ReqIF), viewer, report, HTML assets
   domains/       example domain plug-ins (enclosure)
