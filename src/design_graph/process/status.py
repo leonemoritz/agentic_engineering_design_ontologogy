@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from design_graph.model.system import SystemModel
 from design_graph.process.rules import HUMAN, OpenItem, open_items
-from design_graph.process.templates import DEFAULT_TEMPLATE, ProcessTemplate
+from design_graph.process.templates import DEFAULT_TEMPLATE, ProcessTemplate, StageTemplate
 
 StageState = Literal["complete", "in_progress", "blocked", "not_started"]
 
@@ -57,6 +57,18 @@ class ProcessStatus(BaseModel):
         return all(s.state == "complete" for s in self.stages)
 
 
+def _content_item(stage: StageTemplate, collection: str) -> OpenItem:
+    return OpenItem(
+        rule="PR-STAGE-CONTENT",
+        stage=stage.id,
+        severity="blocking",
+        element=collection,
+        message=f"Stage '{stage.name}' has no {collection.replace('_', ' ')} yet.",
+        action=f"{stage.goal} Exit criterion: {stage.exit_criterion}",
+        owner=stage.owner,
+    )
+
+
 def evaluate_process(
     model: SystemModel, template: ProcessTemplate = DEFAULT_TEMPLATE
 ) -> ProcessStatus:
@@ -69,15 +81,20 @@ def evaluate_process(
     for stage in template.stages:
         missing = [name for name in stage.requires if not getattr(model, name, [])]
         mine = [i for i in items if i.stage == stage.id]
-        blocking = [i for i in mine if i.severity == "blocking"]
         if any(states.get(d) != "complete" for d in stage.depends_on):
             state: StageState = "blocked"
         elif len(missing) == len(stage.requires) and stage.requires and not mine:
             state = "not_started"
-        elif missing or blocking:
+        elif missing or any(i.severity == "blocking" for i in mine):
             state = "in_progress"
         else:
             state = "complete"
+        if state in ("not_started", "in_progress"):
+            # Missing required content is work too: without an item, nobody starts the stage.
+            content = [_content_item(stage, name) for name in missing]
+            items += content
+            mine += content
+        blocking = [i for i in mine if i.severity == "blocking"]
         states[stage.id] = state
         stages.append(
             StageStatus(

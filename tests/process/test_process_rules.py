@@ -137,3 +137,18 @@ def test_template_checks_and_yaml(tmp_path: Path) -> None:
     path = tmp_path / "t.yaml"
     path.write_text(DEFAULT_TEMPLATE.model_dump_json())
     assert load_template(path) == DEFAULT_TEMPLATE
+
+
+def test_empty_actionable_stage_asks_its_owner_to_start() -> None:
+    model = bracket_model()
+    add_concepts(model)
+    review(model, "TS1")
+    status = evaluate_process(model)
+    stages = {s.id: s for s in status.stages}
+    assert stages["allowables"].state == "not_started"
+    assert stages["allowables"].blocking == 1
+    actions = status.next_actions()
+    assert [(i.rule, i.element, i.owner) for i in actions] == [
+        ("PR-STAGE-CONTENT", "allowables", "materials_engineer")
+    ]
+    assert not [i for i in status.items if i.stage == "sizing" and i.rule == "PR-STAGE-CONTENT"]
