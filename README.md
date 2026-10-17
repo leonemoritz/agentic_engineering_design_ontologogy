@@ -39,6 +39,8 @@ Status is derived, never asserted:
 dg model validate examples/model_enclosure.yaml   # structure, traceability, dimensions, authority
 dg model assess examples/model_enclosure.yaml     # SATISFIED / NOT_SATISFIED / OPEN / BLOCKED per requirement
 dg model assess --strict examples/model_enclosure.yaml   # exit 1 unless everything is satisfied
+dg model matrix examples/model_enclosure.yaml    # requirement x verification-case matrix
+dg model import-cards cards.json --subject SYS -o model.yaml   # cards become unapproved requirements
 ```
 
 A requirement is `SATISFIED` only when a human approved it (pinned to its content hash), a part claims it, every

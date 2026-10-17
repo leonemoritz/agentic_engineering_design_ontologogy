@@ -41,3 +41,24 @@ def test_cli_assess_refuses_invalid_model(tmp_path: Path) -> None:
     result = CliRunner().invoke(main, ["model", "assess", str(broken)])
     assert result.exit_code != 0
     assert "validation errors" in result.output
+
+
+def test_matrix_lists_each_requirement_case_pair() -> None:
+    result = CliRunner().invoke(main, ["model", "matrix", str(EXAMPLE)])
+    assert result.exit_code == 0
+    assert "C-FREQ" in result.output and "FAILED" in result.output
+
+
+def test_import_cards_creates_blocked_requirements(tmp_path: Path) -> None:
+    fixture = Path(__file__).resolve().parents[1] / "fixtures/synthetic_requirements.json"
+    out = tmp_path / "imported.yaml"
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["model", "import-cards", str(fixture), "--subject", "SYS", "-o", str(out)]
+    )
+    assert result.exit_code == 0, result.output
+    model = load_model(out)
+    assert [f for f in validate_model(model) if f.severity == "error"] == []
+    assert {r.satisfaction for r in assess_model(model).requirements} == {
+        SatisfactionStatus.BLOCKED
+    }

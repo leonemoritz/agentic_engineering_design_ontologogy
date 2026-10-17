@@ -195,7 +195,7 @@ Decisions that supersede earlier text:
 Phases (each ends green: pytest, ruff, mypy):
 1. **Repo restructure** (done): `core/`, `model/`, `engineering/`, `interchange/`, `domains/`.
 2. **Base MBSE model and assessment** (this iteration): units (`pint`), elements (Need, Part, Requirement, VerificationCase, Assumption, Evidence, ToolDeclaration, Principal, Approval), typed relationships, YAML store, validation rules, derived verification and satisfaction status with margins, baselines with change impact, graph-to-evidence bridge, CLI `dg model validate|assess`.
-3. **Model extensions**: interfaces/flows, modes/scenarios, variants, verification level/stage, budgets with contingency, hazard links, RequirementCard compatibility loader, SysML v2 JSON / ReqIF mapping.
+3. **Model extensions** (started: RequirementCard importer, verification matrix, solver EPERM fix; verification `level`/`stage` fields exist): interfaces/flows, modes/scenarios, variants, verification level/stage, budgets with contingency, hazard links, RequirementCard compatibility loader, SysML v2 JSON / ReqIF mapping.
 4. **Artifacts and cache**: `ArtifactRef`, content-addressed store, JSON cache, remove pickle.
 5. **Capability registry and graph spec**: `Capability`, `GraphSpec`, `from_spec`/`to_spec`, `map` nodes, configurable stages.
 6. **Adapters**: CadQuery extraction, FreeCAD, Grasshopper, CalculiX/Gmsh, with `probe()` and environment fingerprints.

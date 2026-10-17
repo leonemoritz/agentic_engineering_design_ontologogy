@@ -195,7 +195,10 @@ def _check_quantitative(req: Requirement, subject: Part | None, add: _Add) -> No
         attribute = subject.attributes.get(req.attribute)
         if attribute is None:
             add(
-                "REQ_ATTRIBUTE", "error", req.id, f"{subject.id} has no attribute {req.attribute!r}"
+                "REQ_ATTRIBUTE",
+                "warning",
+                req.id,
+                f"{subject.id} records no design value for {req.attribute!r}",
             )
         elif not same_dimension(attribute, req.target):
             add("REQ_DIMENSION", "error", req.id, "attribute and target differ in dimension")

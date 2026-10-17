@@ -218,3 +218,44 @@ def model_assess(model_file: Path, as_json: bool, strict: bool) -> None:
         click.echo(", ".join(f"{k}={v}" for k, v in sorted(assessment.summary().items())))
     if strict and not assessment.all_satisfied:
         raise click.exceptions.Exit(1)
+
+
+@model_group.command("matrix")
+@click.argument("model_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def model_matrix(model_file: Path) -> None:
+    """Print the requirement-by-case verification matrix with derived status."""
+
+    from design_graph.model import ModelError, load_model, validate_model
+    from design_graph.model.matrix import verification_matrix
+
+    try:
+        model = load_model(model_file)
+    except ModelError as error:
+        raise click.ClickException(str(error)) from error
+    if any(f.severity == "error" for f in validate_model(model)):
+        raise click.ClickException("model has validation errors; run 'model validate' first")
+    for row in verification_matrix(model):
+        click.echo(
+            f"{row.requirement:12} {row.satisfaction:14} {row.case:12} {row.method:2} "
+            f"{row.level or '-':10} {row.stage or '-':8} {row.status:11} {row.evidence or '-'}"
+        )
+
+
+@model_group.command("import-cards")
+@click.argument("card_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--subject", required=True, help="Id of the part the requirements apply to.")
+@click.option("--need", default="N-IMPORTED", show_default=True, help="Need id to trace to.")
+@click.option("-o", "--output", required=True, type=click.Path(dir_okay=False, path_type=Path))
+def model_import_cards(card_file: Path, subject: str, need: str, output: Path) -> None:
+    """Import JSON/YAML/ReqIF cards as unapproved model requirements."""
+
+    from design_graph.interchange.requirement_io import load_requirement_cards
+    from design_graph.model import dump_model
+    from design_graph.model.cards_import import import_cards
+
+    try:
+        model = import_cards(load_requirement_cards(card_file), subject=subject, need=need)
+        dump_model(model, output)
+    except (OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    click.echo(f"Imported {len(model.requirements)} requirements into {output}")
