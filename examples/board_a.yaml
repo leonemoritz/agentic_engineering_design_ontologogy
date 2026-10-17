@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: Apache-2.0
+name: synthetic_board_a
+layout_variant_file: layout_variant_a.yaml
+material_density_kg_m3: 2700
+board:
+  width_mm: 72
+  height_mm: 48
+  thickness_mm: 1.6
+  component_heights_mm: [8, 14, 5]
+  mounting_holes_mm:
+    - {x_mm: 5, y_mm: 5}
+    - {x_mm: 67, y_mm: 5}
+    - {x_mm: 5, y_mm: 43}
+    - {x_mm: 67, y_mm: 43}
+  mounting_hole_diameter_mm: 3
+layout:
+  clearance_mm: 3
+  wall_thickness_mm: 2
+  base_thickness_mm: 2
+  lid_gap_mm: 2
+  seam_pitch_mm: 18
+  vent_width_mm: 4
+  tool_radius_mm: 1
+  minimum_web_mm: 2
+requirements:
+  - id: SYN-REQ-1
+    kind: envelope_max_mm
+    params: {value: 90}
+    quote: "The enclosure width and height shall each be no greater than 90 mm."
+    method: T
+  - id: SYN-REQ-2
+    kind: frequency_max_Hz
+    params: {value: 1000000000}
+    quote: "The protected frequency range extends to 1 GHz."
+    method: A
+  - id: SYN-REQ-3
+    kind: seam_pitch_max_mm
+    params: {value: 22}
+    quote: "The maximum lid seam pitch shall be 22 mm."
+    method: T
+    tbc: true
+connectors:
+  - part: SYN-CONN-A
+    group: sensor
+    contacts: 8
+    destination: sensor_bus
+    emc_class: normal
+    footprint_mm: 14
+    wire_length_by_wall_mm: {north: 30, east: 10, south: 22, west: 28}
+    route_penalty_by_wall: {west: 5}
+  - part: SYN-CONN-B
+    group: power
+    contacts: 4
+    destination: power_feed
+    emc_class: critical
+    footprint_mm: 12
+    wire_length_by_wall_mm: {north: 5, east: 25, south: 18, west: 24}
+    route_penalty_by_wall: {east: 5}
+destination_to_wall:
+  sensor_bus: east
+  power_feed: north

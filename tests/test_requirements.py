@@ -80,6 +80,16 @@ def test_tbc_requirement_is_provisional_and_bad_quote_cannot_bind() -> None:
         bind_requirements([malformed])
 
 
+def test_missing_frequency_uses_declared_provisional_fallback() -> None:
+    inputs, conflicts = bind_requirements([])
+    assert conflicts == []
+    assert inputs.f_max_Hz.value == 1_000_000_000.0
+    assert inputs.f_max_Hz.sources == []
+    assert inputs.f_max_Hz.provisional == [
+        "[P] illustrative 1 GHz frequency fallback; replace with a sourced requirement"
+    ]
+
+
 def test_lineage_follows_only_the_sourced_driver_field() -> None:
     inputs, _ = bind_requirements(
         [

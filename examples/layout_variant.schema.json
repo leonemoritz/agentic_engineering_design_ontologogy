@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/design-graph/layout-variant.schema.json",
+  "title": "Synthetic enclosure layout variant",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clearance_mm",
+    "wall_thickness_mm",
+    "base_thickness_mm",
+    "lid_gap_mm",
+    "seam_pitch_mm",
+    "vent_width_mm",
+    "tool_radius_mm",
+    "minimum_web_mm"
+  ],
+  "properties": {
+    "clearance_mm": {"type": "number", "exclusiveMinimum": 0},
+    "wall_thickness_mm": {"type": "number", "exclusiveMinimum": 0},
+    "base_thickness_mm": {"type": "number", "exclusiveMinimum": 0},
+    "lid_gap_mm": {"type": "number", "minimum": 0},
+    "seam_pitch_mm": {"type": "number", "exclusiveMinimum": 0},
+    "vent_width_mm": {"type": "number", "exclusiveMinimum": 0},
+    "tool_radius_mm": {"type": "number", "minimum": 0},
+    "minimum_web_mm": {"type": "number", "minimum": 0}
+  }
+}

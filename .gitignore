@@ -1,11 +1,40 @@
 # SPDX-License-Identifier: Apache-2.0
-.venv/
+# Python environments
+.venv*/
+venv/
+env/
+ENV/
+
+# Python bytecode and packaging
 __pycache__/
+*.py[cod]
+*.egg-info/
+pip-wheel-metadata/
+
+# Test, lint, type-check, and coverage output
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-*.py[cod]
-*.egg-info/
-dist/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Build and generated engineering artifacts
 build/
+dist/
 .design_graph_cache/
+.design_graph/
+*.solved
+*.step
+*.stp
+*.pdf
+*.odb
+*.frd
+*.dat
+*.log
+
+# Operating-system noise
+.DS_Store
+Thumbs.db

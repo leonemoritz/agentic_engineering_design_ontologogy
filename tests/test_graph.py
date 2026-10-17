@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from design_graph import Graph, GraphError, GraphValidationError, Provisional, Ref, rule
+from design_graph import Graph, GraphError, GraphValidationError, Provisional, Ref, Sourced, rule
 
 
 class Inputs(BaseModel):
@@ -16,6 +16,11 @@ class Inputs(BaseModel):
 
 class Result(BaseModel):
     margin: float
+
+
+class MixedInputs(BaseModel):
+    sourced: object
+    plain: float
 
 
 calls = {"source": 0, "compute": 0}
@@ -63,18 +68,24 @@ def test_unknown_node_and_bad_path_are_precise() -> None:
     with pytest.raises(GraphValidationError, match="references unknown node 'missing'"):
         graph.check()
 
-    graph = Graph().add("inputs", make_inputs, {}).add(
-        "margin", calculate, {"force_N": Ref("inputs", "unknown")}
+    graph = (
+        Graph()
+        .add("inputs", make_inputs, {})
+        .add("margin", calculate, {"force_N": Ref("inputs", "unknown")})
     )
     with pytest.raises(GraphValidationError, match="has no field 'unknown'"):
         graph.check()
 
 
 def test_reference_type_mismatch_is_reported() -> None:
-    graph = Graph().add("inputs", make_inputs, {}).add(
-        "length", string_length, {"value": Ref("inputs", "force_N")}
+    graph = (
+        Graph()
+        .add("inputs", make_inputs, {})
+        .add("length", string_length, {"value": Ref("inputs", "force_N")})
     )
-    with pytest.raises(GraphValidationError, match="expects str, but 'inputs'.force_N produces float"):
+    with pytest.raises(
+        GraphValidationError, match="expects str, but 'inputs'.force_N produces float"
+    ):
         graph.check()
 
 
@@ -83,10 +94,57 @@ def test_cycle_is_rejected() -> None:
     def identity(value: float) -> float:
         return value
 
-    graph = Graph().add("a", identity, {"value": Ref("b")}).add(
-        "b", identity, {"value": Ref("a")}
-    )
+    graph = Graph().add("a", identity, {"value": Ref("b")}).add("b", identity, {"value": Ref("a")})
     with pytest.raises(GraphValidationError, match="contains a cycle"):
+        graph.check()
+
+
+def test_backward_stage_edge_is_rejected() -> None:
+    @rule(version="1", source="synthetic later-stage rule")
+    def late_value() -> float:
+        return 1.0
+
+    @rule(version="1", source="synthetic early-stage rule")
+    def early_value(value: float) -> float:
+        return value
+
+    graph = (
+        Graph()
+        .add("late", late_value, {}, stage="verification")
+        .add("early", early_value, {"value": Ref("late")}, stage="inputs")
+    )
+    with pytest.raises(GraphValidationError, match="stage edge goes backward"):
+        graph.check()
+
+
+def test_path_lineage_does_not_inherit_sibling_field_sources() -> None:
+    @rule(version="1", source="synthetic mixed source")
+    def mixed_inputs() -> MixedInputs:
+        return MixedInputs(
+            sourced=Sourced[float](value=4.0, sources=["SYN-FIELD"]),
+            plain=3.0,
+        )
+
+    @rule(version="1", source="synthetic plain consumer")
+    def consume_plain(value: float) -> float:
+        return value
+
+    graph = (
+        Graph()
+        .add("mixed", mixed_inputs, {})
+        .add("plain", consume_plain, {"value": Ref("mixed", "plain")})
+    )
+    graph.evaluate("plain")
+    assert graph.requirement_lineage("SYN-FIELD") == ["mixed"]
+
+
+def test_sequence_binding_must_match_parameter_container_type() -> None:
+    @rule(version="1", source="synthetic scalar consumer")
+    def consume_scalar(value: float) -> float:
+        return value
+
+    graph = Graph().add("scalar", consume_scalar, {"value": [1.0, 2.0]})
+    with pytest.raises(GraphValidationError, match="expects float, got list"):
         graph.check()
 
 
@@ -120,7 +178,9 @@ def test_provisional_reasons_propagate_through_paths_and_lists() -> None:
     graph = (
         Graph()
         .add("inputs", make_inputs, {})
-        .add("sum", collect, {"values": [Ref("inputs", "force_N"), Provisional(3.0, "manual value")]})
+        .add(
+            "sum", collect, {"values": [Ref("inputs", "force_N"), Provisional(3.0, "manual value")]}
+        )
     )
     assert graph.evaluate("sum")["sum"] == 13.0
     assert graph.provenance("sum").provisional_reasons == ["test assumption", "manual value"]

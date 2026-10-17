@@ -27,7 +27,18 @@ def main() -> int:
         path
         for path in ROOT.rglob("*")
         if path.is_file()
-        and not any(part in {".git", ".venv", "__pycache__", ".pytest_cache"} for part in path.parts)
+        and not any(
+            part == ".git"
+            or part.startswith(".venv")
+            or part
+            in {
+                "__pycache__",
+                ".pytest_cache",
+                ".mypy_cache",
+                ".ruff_cache",
+            }
+            for part in path.parts
+        )
     ]
     for path in files:
         relative = path.relative_to(ROOT)
@@ -35,7 +46,10 @@ def main() -> int:
             content = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        if path.suffix in SOURCE_SUFFIXES and "SPDX-License-Identifier: Apache-2.0" not in content[:500]:
+        if (
+            path.suffix in SOURCE_SUFFIXES
+            and "SPDX-License-Identifier: Apache-2.0" not in content[:500]
+        ):
             failures.append(f"{relative}: missing Apache-2.0 SPDX identifier")
         for pattern in SECRET_PATTERNS:
             if pattern.search(content):

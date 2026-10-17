@@ -13,11 +13,28 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import Any, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
+_STAGE_ORDER = {
+    name: index
+    for index, name in enumerate(
+        (
+            "inputs",
+            "requirements",
+            "design_inputs",
+            "layout & rules",
+            "draft (2-d)",
+            "geometry (solids)",
+            "analysis (tiered)",
+            "decision",
+            "verification",
+            "outputs",
+        )
+    )
+}
 
 
 class GraphError(Exception):
@@ -49,7 +66,8 @@ class Provisional(BaseModel):
     def __init__(self, value: Any, reason: str, **data: Any) -> None:
         super().__init__(value=value, reason=reason, **data)
 
-class Sourced(BaseModel, Generic[T]):
+
+class Sourced[T](BaseModel):
     """Attach requirement lineage and provisional reasons to a value."""
 
     value: T
@@ -108,7 +126,8 @@ def rule(*, version: str, source: str) -> Callable[[Callable[..., T]], Callable[
         raise ValueError("rule version and source must be non-empty")
 
     def decorate(function: Callable[..., T]) -> Callable[..., T]:
-        setattr(function, "__design_graph_rule__", RuleMetadata(version=version, source=source))
+        metadata = RuleMetadata(version=version, source=source)
+        setattr(function, "__design_graph_rule__", metadata)  # noqa: B010
         return function
 
     return decorate
@@ -149,7 +168,9 @@ class Graph:
             signature = inspect.signature(function)
             hints = get_type_hints(function)
         except (TypeError, NameError) as error:
-            raise GraphValidationError(f"cannot inspect function for node {name!r}: {error}") from error
+            raise GraphValidationError(
+                f"cannot inspect function for node {name!r}: {error}"
+            ) from error
         if "return" not in hints:
             raise GraphValidationError(f"function for node {name!r} must declare a return type")
         self._nodes[name] = _Node(
@@ -177,27 +198,46 @@ class Graph:
             for parameter_name, parameter in parameters.items():
                 if parameter.kind in (parameter.VAR_POSITIONAL, parameter.VAR_KEYWORD):
                     continue
-                if parameter_name not in node.bindings and parameter.default is inspect.Parameter.empty:
+                if (
+                    parameter_name not in node.bindings
+                    and parameter.default is inspect.Parameter.empty
+                ):
                     raise GraphValidationError(
                         f"node {node.name!r} is missing binding for parameter {parameter_name!r}"
                     )
                 if parameter_name in node.bindings:
                     expected = node.hints.get(parameter_name, Any)
-                    self._check_binding(node.name, parameter_name, node.bindings[parameter_name], expected)
+                    self._check_binding(
+                        node.name, parameter_name, node.bindings[parameter_name], expected
+                    )
+        for consumer in self._nodes.values():
+            consumer_stage = _STAGE_ORDER.get((consumer.stage or "").casefold())
+            if consumer_stage is None:
+                continue
+            for dependency_name in self._dependencies(consumer.name):
+                dependency = self._nodes[dependency_name]
+                dependency_stage = _STAGE_ORDER.get((dependency.stage or "").casefold())
+                if dependency_stage is not None and dependency_stage > consumer_stage:
+                    raise GraphValidationError(
+                        f"stage edge goes backward: {dependency.name!r} ({dependency.stage}) "
+                        f"to {consumer.name!r} ({consumer.stage})"
+                    )
         self._topological_order()
 
     def _check_binding(self, consumer: str, parameter: str, binding: Any, expected: Any) -> None:
         if isinstance(binding, Ref):
             if binding.node not in self._nodes:
                 raise GraphValidationError(
-                    f"node {consumer!r} parameter {parameter!r} references unknown node {binding.node!r}"
+                    f"node {consumer!r} parameter {parameter!r} references unknown node "
+                    f"{binding.node!r}"
                 )
             produced = self._resolve_path_type(binding.node, binding.path)
             expected_type = _unwrap_annotation(expected)
             if not _types_compatible(produced, expected_type):
                 path = f".{binding.path}" if binding.path else ""
                 raise GraphValidationError(
-                    f"node {consumer!r} parameter {parameter!r} expects {_type_name(expected_type)}, "
+                    f"node {consumer!r} parameter {parameter!r} expects "
+                    f"{_type_name(expected_type)}, "
                     f"but {binding.node!r}{path} produces {_type_name(produced)}"
                 )
             return
@@ -212,6 +252,21 @@ class Graph:
             self._check_binding(consumer, parameter, binding.value, expected)
             return
         if isinstance(binding, (list, tuple)):
+            expected_origin = get_origin(expected)
+            sequence_origins = (list, tuple, Sequence)
+            if expected is not Any and expected_origin not in sequence_origins:
+                raise GraphValidationError(
+                    f"node {consumer!r} parameter {parameter!r} expects {_type_name(expected)}, "
+                    f"got {_type_name(type(binding))}"
+                )
+            if isinstance(binding, list) and expected_origin is tuple:
+                raise GraphValidationError(
+                    f"node {consumer!r} parameter {parameter!r} expects tuple, got list"
+                )
+            if isinstance(binding, tuple) and expected_origin is list:
+                raise GraphValidationError(
+                    f"node {consumer!r} parameter {parameter!r} expects list, got tuple"
+                )
             element_type = _sequence_element_type(expected)
             for item in binding:
                 self._check_binding(consumer, parameter, item, element_type)
@@ -328,6 +383,8 @@ class Graph:
             if isinstance(output, Provisional):
                 introduced.append(output.reason)
                 output = output.value
+            output_reasons = _sourced_provisional_reasons(output)
+            introduced.extend(reason for reason in output_reasons if reason not in reasons)
             cached = _CachedResult(output, introduced)
             self._store_cache(input_hash, cached)
         wall_time = time.perf_counter() - started
@@ -394,14 +451,16 @@ class Graph:
                     value = getattr(value, part)
                 if isinstance(value, Sourced):
                     sources.extend(value.sources)
-            if not sources:
+            if not sources and not binding.path:
                 sources.extend(self._lineage.get(binding.node, []))
             return list(dict.fromkeys(sources))
         if isinstance(binding, Sourced):
             return list(binding.sources)
         if isinstance(binding, (list, tuple)):
             return list(
-                dict.fromkeys(source for item in binding for source in self._requirement_sources(item))
+                dict.fromkeys(
+                    source for item in binding for source in self._requirement_sources(item)
+                )
             )
         return []
 
@@ -478,6 +537,15 @@ class Graph:
         if name not in self._provenance:
             raise GraphError(f"node {name!r} has not been evaluated")
         return self._provenance[name]
+
+    def binding(self, node_name: str, parameter: str) -> Any:
+        """Return a node's current binding for controller trial/revert workflows."""
+
+        if node_name not in self._nodes:
+            raise GraphValidationError(f"unknown node {node_name!r}")
+        if parameter not in self._nodes[node_name].bindings:
+            raise GraphValidationError(f"node {node_name!r} has no binding {parameter!r}")
+        return self._nodes[node_name].bindings[parameter]
 
     def assumptions(self) -> dict[str, list[str]]:
         """Return each directly introduced provisional reason and its source nodes."""
@@ -556,15 +624,41 @@ def _sources_in(value: Any) -> list[str]:
             )
         )
     if isinstance(value, Mapping):
-        return list(dict.fromkeys(source for item in value.values() for source in _sources_in(item)))
+        return list(
+            dict.fromkeys(source for item in value.values() for source in _sources_in(item))
+        )
     if isinstance(value, (list, tuple)):
         return list(dict.fromkeys(source for item in value for source in _sources_in(item)))
     return []
 
 
+def _sourced_provisional_reasons(value: Any) -> list[str]:
+    if isinstance(value, Sourced):
+        return list(dict.fromkeys(value.provisional + _sourced_provisional_reasons(value.value)))
+    if isinstance(value, BaseModel):
+        return list(
+            dict.fromkeys(
+                reason
+                for field_name in type(value).model_fields
+                for reason in _sourced_provisional_reasons(getattr(value, field_name))
+            )
+        )
+    if isinstance(value, Mapping):
+        return list(
+            dict.fromkeys(
+                reason for item in value.values() for reason in _sourced_provisional_reasons(item)
+            )
+        )
+    if isinstance(value, (list, tuple)):
+        return list(
+            dict.fromkeys(reason for item in value for reason in _sourced_provisional_reasons(item))
+        )
+    return []
+
+
 def _unwrap_annotation(annotation: Any) -> Any:
     origin = get_origin(annotation)
-    if origin in (Union, getattr(__import__("types"), "UnionType")):
+    if origin in (Union, __import__("types").UnionType):
         choices = [choice for choice in get_args(annotation) if choice is not type(None)]
         return choices[0] if len(choices) == 1 else annotation
     return annotation
@@ -586,14 +680,18 @@ def _types_compatible(produced: Any, expected: Any) -> bool:
         return True
     expected_origin = get_origin(expected)
     produced_origin = get_origin(produced)
-    if expected_origin in (Union, getattr(__import__("types"), "UnionType")):
+    if expected_origin in (Union, __import__("types").UnionType):
         return any(_types_compatible(produced, choice) for choice in get_args(expected))
-    if produced_origin in (Union, getattr(__import__("types"), "UnionType")):
+    if produced_origin in (Union, __import__("types").UnionType):
         return all(_types_compatible(choice, expected) for choice in get_args(produced))
     if expected_origin is not None or produced_origin is not None:
         return expected_origin == produced_origin and get_args(expected) == get_args(produced)
     try:
-        return inspect.isclass(produced) and inspect.isclass(expected) and issubclass(produced, expected)
+        return (
+            inspect.isclass(produced)
+            and inspect.isclass(expected)
+            and issubclass(produced, expected)
+        )
     except TypeError:
         return False
 
@@ -603,7 +701,7 @@ def _value_matches_type(value: Any, expected: Any) -> bool:
         return True
     expected = _unwrap_annotation(expected)
     origin = get_origin(expected)
-    if origin in (Union, getattr(__import__("types"), "UnionType")):
+    if origin in (Union, __import__("types").UnionType):
         return any(_value_matches_type(value, choice) for choice in get_args(expected))
     if origin in (list, Sequence):
         return isinstance(value, (list, tuple)) and all(
@@ -625,9 +723,15 @@ def _type_name(value: Any) -> str:
 
 def _canonical(value: Any) -> Any:
     if isinstance(value, BaseModel):
-        return {"__model__": _type_name(type(value)), "fields": _canonical(value.model_dump(mode="python"))}
+        return {
+            "__model__": _type_name(type(value)),
+            "fields": _canonical(value.model_dump(mode="python")),
+        }
     if isinstance(value, Mapping):
-        return {str(key): _canonical(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+        return {
+            str(key): _canonical(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
     if isinstance(value, (list, tuple)):
         return [_canonical(item) for item in value]
     if isinstance(value, (str, int, float, bool)) or value is None:
@@ -644,7 +748,9 @@ def _canonical(value: Any) -> Any:
     try:
         return {"__pickle__": hashlib.sha256(pickle.dumps(value, protocol=5)).hexdigest()}
     except Exception as error:
-        raise GraphError(f"cannot create a stable cache key for {_type_name(type(value))}") from error
+        raise GraphError(
+            f"cannot create a stable cache key for {_type_name(type(value))}"
+        ) from error
 
 
 def _digest(value: Any) -> str:
