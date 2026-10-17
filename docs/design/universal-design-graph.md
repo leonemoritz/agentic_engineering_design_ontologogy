@@ -254,3 +254,60 @@ Reference frames: ISO/IEC/IEEE 15288 and 29148 (lifecycle, requirement quality),
 
 ### 7.4 What remains the human's job
 Choosing criticality and credibility thresholds per requirement, approving requirements and baselines, performing or witnessing R/I/T, accepting residual risk, and any regulatory qualification. The tool records and enforces these; it must not decide them.
+
+## 8. Process layer and agent roles (implemented on branch `process-layer-and-agent-roles`)
+
+### 8.1 Motivation
+A field test (an agent designing a 3D-printed bridge, `AgenticFreeCAD/examples/bridge_v3_method`)
+showed the model working as a ledger and a gate, but not as a guide. None of the eleven logged
+engineering decisions came from the ontology. Every significant modelling error was caught by
+comparing independent models (frame model, CAD, FEM), and every stage was sequenced by a method the
+agent wrote itself. This section implements the workflow layer of 3.7 and part of F1, F5, F9 and
+F14, aimed at that gap.
+
+### 8.2 Engineering elements (`model/engineering.py`)
+| Element | Purpose |
+|---|---|
+| Statement | Verbatim stakeholder text; needs and requirements trace to it |
+| DesignRule | A solution constraint adopted by the designer, kept apart from requirements |
+| Concept, TradeStudy | Alternatives, gates and criteria (computed or reasoned, with direction), scores and a decision that validation checks against the scores |
+| LoadCase | Loading for performance requirements; its requirements must be covered by failure modes |
+| FailureMode | How the design fails, what it threatens, which analysis covers it; unmodelled modes need a reason |
+| OptimizationSpec | Variables with bounds, objectives and constraints of the sizing problem |
+| Allowable | Material value with basis, statistics, knockdowns, source and test status |
+| Credibility | Tier, mesh convergence, comparison case, agreement, calibration factors, validation evidence, limitations, waiver |
+| Review | An independent review pinned to content hashes; agents may review, but a review is never an approval |
+| ConsistencyCheck | Two values from independent models, a tolerance and a feedback stage |
+
+The baseline covers the design-defining engineering elements. A changed allowable affects every
+requirement covered by a modelled failure mode; a changed failure mode or load case affects the
+requirements it covers.
+
+### 8.3 Process rules and status (`process/`)
+`open_items(model)` runs the rules (PR-*). Each item has a stage, severity, owner role and action.
+`evaluate_process(model, template)` derives each stage's state: complete, in_progress, blocked or
+not_started. The state comes from the stage's required content, its blocking items and its
+dependencies, and is never asserted. `next_actions()` orders items by work order, earliest stage
+first. `human_actions` lists what only a person can do: approvals, inspections, reviews and tests.
+
+### 8.4 Agents (`agents/`)
+Roles: manager, requirements engineer, concept engineer, materials engineer, structures analyst,
+CAD/DfM engineer, simulation credibility engineer, test engineer, independent quality reviewer,
+and the human. Each role has write permissions and a checklist; the checklist is the guidance.
+
+The orchestrator follows these rules:
+- Only stages whose dependencies are complete get tasks.
+- A proposal is rejected if it writes outside the role or a forbidden collection, attests evidence,
+  or adds a validation error.
+- An accepted proposal goes to the quality role. The review task carries the changed elements and
+  the items, never the author's rationale.
+- The reviewer must differ from the author, and the review is pinned to content hashes.
+- A rejected review returns its findings to the author, with a bounded number of attempts.
+
+### 8.5 Not implemented yet
+- The MCP server (section 3.8): `process status`, `open-items` and `plan` are its natural tools.
+- Credibility thresholds per requirement criticality (F1 policy).
+- A margin policy (F5).
+- Concurrent tasks within a round.
+- Model-diversity controls for reviewers: same-model reviewers share blind spots, so a second
+  model or a human sample review is advised.

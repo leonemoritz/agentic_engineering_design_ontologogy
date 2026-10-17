@@ -13,7 +13,21 @@ from design_graph.model.system import SystemModel, basis_hash, content_hash
 from design_graph.model.units import Quantity
 from design_graph.model.validate import validate_model
 
-_BASELINED = ("needs", "parts", "requirements", "cases", "assumptions", "tools")
+_BASELINED = (
+    "needs",
+    "parts",
+    "requirements",
+    "cases",
+    "assumptions",
+    "tools",
+    # design-defining engineering elements
+    "design_rules",
+    "trade_studies",
+    "load_cases",
+    "failure_modes",
+    "optimizations",
+    "allowables",
+)
 
 
 class Impact(BaseModel):
@@ -85,6 +99,16 @@ def _affected(model: SystemModel, changed: set[str]) -> list[str]:
     for case in model.cases:
         if case.id in changed or (case.tool is not None and case.tool in changed):
             seeds.update(model.related("verify", source=case.id))
+    for mode in model.failure_modes:
+        if mode.id in changed or any(case in changed for case in mode.analysis):
+            seeds.update(set(mode.covers) & requirement_ids)
+    for load_case in model.load_cases:
+        if load_case.id in changed:
+            seeds.update(set(load_case.requirements) & requirement_ids)
+    if any(a.id in changed for a in model.allowables):
+        for mode in model.failure_modes:
+            if mode.status == "modelled":
+                seeds.update(set(mode.covers) & requirement_ids)
     affected = set(seeds)
     stack = list(seeds)
     while stack:

@@ -20,6 +20,7 @@ from design_graph.model.elements import (
 )
 from design_graph.model.system import SystemModel, content_hash
 from design_graph.model.units import Quantity, same_dimension
+from design_graph.model.validate_engineering import check_engineering
 
 Severity = Literal["error", "warning"]
 _Add = Callable[[str, Severity, str, str], None]
@@ -68,6 +69,7 @@ def validate_model(model: SystemModel) -> list[Finding]:
         _check_requirement(model, requirement, add)
     _check_cases_and_evidence(model, add)
     _check_people(model, add)
+    check_engineering(model, add)
     return sorted(findings, key=lambda f: (f.severity != "error", f.element, f.code))
 
 
