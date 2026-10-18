@@ -87,6 +87,24 @@ report = Orchestrator(model, PromptBackend(my_complete)).run()
 report.status.stages, report.records, report.human_actions
 ```
 
+## MCP server
+
+`design-graph-mcp` exposes the system model and process layer to agents over MCP (stdio). It needs
+the `mcp` extra. Tool paths are relative to `--root`; nothing outside it is read.
+
+```sh
+python -m pip install -e '.[mcp]'
+claude mcp add design-graph -- design-graph-mcp --root "$PWD"
+```
+
+Tools: `validate_model`, `get_verification_status`, `get_verification_matrix`,
+`get_process_status`, `list_open_items`, `plan_tasks`, `list_roles`, `get_element`,
+`propose_change`. All are read-only and return structured content. `propose_change` runs a role's
+proposal through the orchestrator's permission and validation gate and reports the items it would
+resolve and raise, without writing the model. Approvals, attestations, baselines, principals and
+tool declarations are not reachable. Errors are tool errors carrying JSON with a `code`. A tour of
+the repository is in `docs/walkthrough.md`.
+
 ## Layout
 
 ```
@@ -95,10 +113,11 @@ src/design_graph/
   model/         MBSE model, engineering elements, validation, assessment, baselines, evidence bridge
   process/       stage templates, completeness and consistency rules, stage status, next actions
   agents/        roles, orchestrator, callable and prompt backends
+  mcp/           MCP server over the model and process layer (read and dry-run only)
   engineering/   analysis rules, geometry/CAD, connectors, solver runner, decision records, controller
   interchange/   requirement import (JSON/YAML/ReqIF), viewer, report, HTML assets
   domains/       example domain plug-ins (enclosure)
-docs/design/     design document
+docs/            walkthrough; design/ holds the design document
 examples/        synthetic example inputs
 tests/           pytest suite (tests/model for the system model)
 ```

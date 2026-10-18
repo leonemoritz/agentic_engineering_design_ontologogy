@@ -212,6 +212,8 @@ class Orchestrator:
                 return None, "rejected_permission", f"{role.id} may not write {collection}", []
             if collection == "evidence" and any(i.get("attestations") for i in items):
                 return None, "rejected_permission", "agents may not attest evidence", []
+            if collection == "evidence" and any(i.get("created_by") != task.author for i in items):
+                return None, "rejected_permission", f"evidence must be created by {task.author}", []
         candidate = self.model.model_copy(deep=True)
         changed: list[str] = []
         for collection, items in proposal.upserts.items():

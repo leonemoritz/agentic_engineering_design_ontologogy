@@ -304,8 +304,22 @@ The orchestrator follows these rules:
 - The reviewer must differ from the author, and the review is pinned to content hashes.
 - A rejected review returns its findings to the author, with a bounded number of attempts.
 
-### 8.5 Not implemented yet
-- The MCP server (section 3.8): `process status`, `open-items` and `plan` are its natural tools.
+### 8.5 MCP server (`mcp/`, phase 7, first cut)
+`design-graph-mcp` serves the model and process layer over stdio. Tools: `validate_model`,
+`get_verification_status`, `get_verification_matrix`, `get_process_status`, `list_open_items`,
+`plan_tasks`, `list_roles`, `get_element`, `propose_change`. Following 3.8:
+- Every tool has an input and output schema and returns `structuredContent`; anticipated failures
+  are `isError` results whose text is JSON with a `code` and details.
+- All tools are annotated read-only. `propose_change` is the propose path: it runs a role's
+  proposal through `Orchestrator.apply` (permissions, attestation and authorship checks, no new
+  validation errors) and reports resolved and new open items and requirement status changes. It
+  never writes the model, so review and approval stay outside the agent's reach.
+- Paths resolve below a workspace root. No tool runs code or external processes.
+- Not yet: the capability and spec tools of 3.8 (`list_capabilities`, `validate_spec`,
+  `evaluate`, `explain_node`, `set_binding`) wait for phases 4 and 5; a write path for reviewed
+  proposals; audit logging of tool calls.
+
+### 8.6 Not implemented yet
 - Credibility thresholds per requirement criticality (F1 policy).
 - A margin policy (F5).
 - Concurrent tasks within a round.

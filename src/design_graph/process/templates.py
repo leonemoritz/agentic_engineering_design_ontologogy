@@ -55,12 +55,23 @@ class ProcessTemplate(BaseModel):
 
 
 def _stage(
-    id: str, name: str, owner: str, goal: str, exit_criterion: str, *, depends_on: list[str],
+    id: str,
+    name: str,
+    owner: str,
+    goal: str,
+    exit_criterion: str,
+    *,
+    depends_on: list[str],
     requires: list[str],
 ) -> StageTemplate:
     return StageTemplate(
-        id=id, name=name, owner=owner, goal=goal, exit_criterion=exit_criterion,
-        depends_on=depends_on, requires=requires,
+        id=id,
+        name=name,
+        owner=owner,
+        goal=goal,
+        exit_criterion=exit_criterion,
+        depends_on=depends_on,
+        requires=requires,
     )
 
 
@@ -69,55 +80,72 @@ DEFAULT_TEMPLATE = ProcessTemplate(
     name="Requirements-first engineering design with tiered verification",
     stages=[
         _stage(
-            "requirements", "Requirements", "requirements_engineer",
+            "requirements",
+            "Requirements",
+            "requirements_engineer",
             "Interpret every stakeholder statement into needs, solution-neutral requirements, "
             "design rules and explicit assumptions.",
             "Every statement traced; every requirement verifiable and traced to a need; every "
             "open assumption has a closure plan.",
-            depends_on=[], requires=["needs", "requirements"],
+            depends_on=[],
+            requires=["needs", "requirements"],
         ),
         _stage(
-            "concepts", "Concept screening", "concept_engineer",
-            "Screen alternative concepts against gates and criteria derived from the "
-            "requirements.",
+            "concepts",
+            "Concept screening",
+            "concept_engineer",
+            "Screen alternative concepts against gates and criteria derived from the requirements.",
             "A trade study selects a concept; rejections cite computed criteria; the study is "
             "independently reviewed.",
-            depends_on=["requirements"], requires=["concepts", "trade_studies"],
+            depends_on=["requirements"],
+            requires=["concepts", "trade_studies"],
         ),
         _stage(
-            "allowables", "Allowables", "materials_engineer",
+            "allowables",
+            "Allowables",
+            "materials_engineer",
             "Record the material values the analysis may use, with source, basis and statistics.",
             "Every value sourced or marked assumed; a coupon plan for untested values.",
-            depends_on=["concepts"], requires=["allowables"],
+            depends_on=["concepts"],
+            requires=["allowables"],
         ),
         _stage(
-            "sizing", "Load cases, failure modes and sizing", "structures_analyst",
-            "Define load cases, list every failure mode, and size the design against all of "
-            "them.",
+            "sizing",
+            "Load cases, failure modes and sizing",
+            "structures_analyst",
+            "Define load cases, list every failure mode, and size the design against all of them.",
             "Every load-case requirement covered by failure modes; every modelled mode has an "
             "analysis; the sizing problem is declared.",
             depends_on=["concepts", "allowables"],
             requires=["load_cases", "failure_modes", "optimizations"],
         ),
         _stage(
-            "analysis", "Tiered analysis and credibility", "simulation_credibility",
-            "Check tier-1 results with a higher tier (FEM, CAD), converge, compare and "
-            "calibrate.",
+            "analysis",
+            "Tiered analysis and credibility",
+            "simulation_credibility",
+            "Check tier-1 results with a higher tier (FEM, CAD), converge, compare and calibrate.",
             "Every analysis has a credibility record, a higher-tier comparison and a converged "
             "mesh; independent models agree within tolerance.",
-            depends_on=["sizing"], requires=["evidence", "credibility"],
+            depends_on=["sizing"],
+            requires=["evidence", "credibility"],
         ),
         _stage(
-            "verification", "Verification and sign-off", "structures_analyst",
+            "verification",
+            "Verification and sign-off",
+            "structures_analyst",
             "Current, passing evidence for every case; independent reviews; human approvals.",
             "Every requirement verified, reviewed, and approved by a human.",
-            depends_on=["analysis"], requires=["evidence"],
+            depends_on=["analysis"],
+            requires=["evidence"],
         ),
         _stage(
-            "test", "Test", "test_engineer",
+            "test",
+            "Test",
+            "test_engineer",
             "Confirm allowables and performance by test, witnessed by a person.",
             "Coupon and system tests attested; allowables replaced by measured values.",
-            depends_on=["verification"], requires=[],
+            depends_on=["verification"],
+            requires=[],
         ),
     ],
 )

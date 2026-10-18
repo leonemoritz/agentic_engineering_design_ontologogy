@@ -13,12 +13,14 @@ license = { text = "Apache-2.0" }
 dependencies = ["pydantic>=2.6,<3", "click>=8.1,<9", "PyYAML>=6,<7", "pint>=0.24,<1"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "build>=1.2,<2", "types-PyYAML>=6,<7", "playwright>=1.45,<2"]
+dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "build>=1.2,<2", "types-PyYAML>=6,<7", "playwright>=1.45,<2", "mcp>=2.3,<3"]
 cad = ["cadquery>=2.4,<3"]
 pdf = ["playwright>=1.45,<2"]
+mcp = ["mcp>=2.3,<3"]
 
 [project.scripts]
 dg = "design_graph.cli:main"
+design-graph-mcp = "design_graph.mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
