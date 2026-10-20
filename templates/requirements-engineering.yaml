@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: Apache-2.0
+# Process template for requirements engineering: elicit, specify, plan and run verification
+# (with the CAx connectors), then sign off. Use it with
+#   dg process status MODEL.yaml --template templates/requirements-engineering.yaml
+# Stage ids reuse the process-rule vocabulary (requirements, analysis, verification), so the
+# open items of the built-in rules land in these stages. Concept, sizing and test stages are
+# left out; add them back from the default template when the design work starts.
+id: requirements-engineering
+name: Requirements engineering with tool-backed verification
+stages:
+  - id: requirements
+    name: Elicitation and specification
+    owner: requirements_engineer
+    goal: >-
+      Capture every stakeholder statement verbatim, derive needs, and write solution-neutral,
+      verifiable requirements (one 'shall' each, a relation and a unit where quantitative) with a
+      verification method and a parent need. State assumptions with an owner.
+    exit_criterion: >-
+      Every statement traced to a need; every requirement traced to a need, verifiable, and
+      assigned a method; every open assumption has a closure plan.
+    depends_on: []
+    requires: [statements, needs, requirements]
+  - id: analysis
+    name: Verification planning and execution
+    owner: simulation_credibility
+    goal: >-
+      Give every requirement a verification case. For analysis (A) and test (T) cases, declare
+      the tool and its version (a human declares tools), run the connector, and record its output
+      as evidence with provenance. Add credibility records for analysis cases.
+    exit_criterion: >-
+      Every case has a declared tool where its method needs one, and current evidence from a
+      recorded run; analysis results have a credibility record.
+    depends_on: [requirements]
+    requires: [cases, tools, evidence]
+  - id: verification
+    name: Review and sign-off
+    owner: requirements_engineer
+    goal: >-
+      Independent review of requirements and evidence; human approval of requirements and cases,
+      pinned to their content; attestations for review (R), inspection (I) and test (T) cases.
+    exit_criterion: >-
+      Every requirement SATISFIED: approved, verified by current passing evidence, no open
+      assumption, all derived requirements satisfied.
+    depends_on: [analysis]
+    requires: [evidence]

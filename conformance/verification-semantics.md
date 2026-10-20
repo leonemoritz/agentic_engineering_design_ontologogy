@@ -1,7 +1,7 @@
 # Verification semantics
 
 Status: draft 0.1 (suite `design-graph-verification/0.1`), October 2026. This document describes
-what `design_graph` 0.2.0 does. The vectors in `vectors/` are the test. If this text and the
+what `design_graph` 0.3.0 does. The vectors in `vectors/` are the test. If this text and the
 vectors disagree, the vectors are right and this text has a bug.
 
 The ontology in `ontology/` defines the vocabulary and the structure (SHACL). It does not define
@@ -233,7 +233,7 @@ readable messages are not part of the contract.
 
 ## 7. Known issues
 
-These are behaviours of 0.2.0 that the vectors record but a future version may change.
+These are behaviours of 0.3.0 that the vectors record but a future version may change.
 
 - **K1. The RDF export cannot carry invalidation.** Hashes are defined over the normalized
   JSON. The Turtle and JSON-LD exports rename fields, drop list order and omit the current

@@ -25,6 +25,7 @@ the approvals, attestations and tool declarations.
 | `agents/` | Roles with write permissions, orchestrator, callable and prompt backends | `orchestrator.py` (`plan`, `apply`, `run`) |
 | `mcp/` | MCP server over the model and process layer (read and dry-run only) | `tools.py` |
 | `engineering/` | External solver runner, trial sizing controller | `solver.py` |
+| `connectors/` | Ten open-source CAx tools run as separate processes; outputs become evidence | `base.py` (`Connector.run`, `evidence_from_run`) |
 | `interchange/` | Requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, graph viewer | `ontology.py`, `requirement_io.py` |
 
 Layers depend downward only: `agents` → `process` → `model`; `core` knows nothing about any of them.
@@ -64,6 +65,27 @@ dg process plan examples/model_process_bracket.yaml
 In Python, `Orchestrator(model, backend).run()` executes those tasks: each proposal is checked for
 permissions and new validation errors, then reviewed by the quality role, which sees the changed
 elements but not the author's reasoning. See `tests/process/test_orchestrator.py`.
+
+**Where do requirements come from?** Requirement cards (JSON, YAML or ReqIF) are the import
+format. `templates/requirement-cards.yaml` is a fill-in template. The requirements-engineering
+process template reports the same rules in three stages: specification, verification planning
+and execution, and sign-off.
+
+```sh
+dg model import-cards templates/requirement-cards.yaml --subject SYS -o build/model.yaml
+dg process status build/model.yaml --template templates/requirements-engineering.yaml
+```
+
+**Where do analysis values come from?** A connector runs an open-source CAx tool (FreeCAD,
+Open CASCADE, Gmsh, CalculiX, OpenFOAM, ...) as a separate process on a deck you wrote. It fills
+the deck's placeholders from part attributes and reads the tool's outputs. `--record` turns one
+output into evidence, bound to the requirement, the case and the run's input hash. The connectors
+are not yet tested against real tool installations; see the README.
+
+```sh
+dg connectors list
+dg connectors run freecad deck.py -w build/run --params-from build/model.yaml:SYS --attr x
+```
 
 **As a formal ontology.** The model's classes are published as OWL 2 with SHACL shapes in
 `ontology/`. Any model exports as RDF data and can be checked against the shapes with standard

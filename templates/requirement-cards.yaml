@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: Apache-2.0
+# Requirement-card template. Copy it, replace the cards, then:
+#   dg requirements my-cards.yaml                                   # numbers match the quotes?
+#   dg model import-cards my-cards.yaml --subject SYS -o model.yaml # unapproved requirements
+#
+# One card = one requirement as written by the stakeholder.
+#   id        unique, stable id
+#   quote     the requirement text, verbatim; one 'shall', one condition
+#   method    A analysis | R review | I inspection | T test
+#   status    draft | active | withdrawn                     (default active)
+#   tbc       true while a value is still to be confirmed     (default false)
+# A quantitative card adds the constraint the quote states, and the numbers must appear in it:
+#   attribute the part attribute the constraint is on
+#   relation  le (<=) | ge (>=) | eq (= within tolerance) | range (value..upper)
+#   value     the limit; upper for range; tolerance for eq
+#   unit      any unit pint reads; empty for dimensionless
+# A card without a relation is qualitative: it is verified by attestation only.
+#
+# Analysis (A) and test (T) cases need a declared tool. With the connectors, the evidence for a
+# card is one named output of one run, for example
+#   dg connectors run <connector> deck --record model.yaml --output <name> --case <case> ...
+requirements:
+  - id: R-LE
+    quote: SYS shall have x <= 3.
+    method: A
+    attribute: x
+    relation: le
+    value: 3
+  - id: R-GE
+    quote: SYS shall have y >= 5.
+    method: A
+    attribute: y
+    relation: ge
+    value: 5
+  - id: R-RANGE
+    quote: SYS shall have z between 1 and 2.
+    method: T
+    attribute: z
+    relation: range
+    value: 1
+    upper: 2
+  - id: R-EQ
+    quote: SYS shall have w = 4 within 0.5.
+    method: I
+    attribute: w
+    relation: eq
+    value: 4
+    tolerance: 0.5
+  - id: R-UNIT
+    quote: SYS shall have l <= 120 mm.
+    method: A
+    attribute: l
+    relation: le
+    value: 120
+    unit: mm
+  - id: R-TBC
+    quote: SYS shall have v >= 10.
+    method: A
+    attribute: v
+    relation: ge
+    value: 10
+    tbc: true
+  - id: R-QUAL
+    quote: SYS shall have property p.
+    method: R

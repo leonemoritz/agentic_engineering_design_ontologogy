@@ -9,7 +9,7 @@
 
 <https://w3id.org/design-graph/shapes> a owl:Ontology ;
     owl:imports <https://w3id.org/design-graph/ontology> ;
-    owl:versionInfo "0.2.0" .
+    owl:versionInfo "0.3.0" .
 
 dgsh:AllowableShape a sh:NodeShape ;
     sh:property dgsh:Allowable-basis,

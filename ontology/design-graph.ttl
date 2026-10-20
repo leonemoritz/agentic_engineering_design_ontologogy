@@ -13,7 +13,7 @@
     dcterms:license <https://www.apache.org/licenses/LICENSE-2.0> ;
     dcterms:title "Agentic Engineering Design Ontology"@en ;
     rdfs:comment "Not expressed in OWL or SHACL: Derived verification and satisfaction status (computed by `dg model assess`, not stored). Content-hash pinning of approvals, reviews and evidence, and the staleness it detects. Unit dimensions and conversions; units are exported as unit strings. Cycles in derive and refine relationships and in the part tree. Requirement rules that depend on the relation (target, upper, tolerance) and wording lints. Endpoint types of withdrawn relationships, and relationships touching withdrawn elements. Evidence linked to its case by a verify relationship; attestation roles of the principal. Trade-study decisions against scores, and resolution of consistency-check values. The order of list fields; lists are exported as unordered multi-valued properties."@en ;
-    owl:versionInfo "0.2.0" .
+    owl:versionInfo "0.3.0" .
 
 dg:Statement a owl:Class ;
     rdfs:label "Statement"@en ;

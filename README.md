@@ -15,11 +15,11 @@ allowables, sizing, CAD and FEM. The approvals and the physical test are left to
 ## Scope
 
 The project starts high level: the system model, the engineering process, and the authority
-rules that decide when a design counts as verified. Tool adapters are deliberately not included
-yet. There is no CadQuery, FreeCAD or CalculiX integration and no loader for declarative graph
-specs. Today a tool connects as an external executable (`run_solver`) or as a rule in the
-computation graph, and its results enter the model as evidence. Adapters for specific CAD and CAE
-tools are straightforward to build on that boundary later.
+rules that decide when a design counts as verified. Tools sit behind that boundary. Ten
+open-source CAx tools connect through thin [connectors](#cax-connectors) that run each tool as a
+separate executable and turn one named output into evidence. The connectors do not build models
+for you: you write the deck, script or case, and the connector stages, runs and reads it. There is
+no loader for declarative graph specs yet, and commercial tools are not connected.
 
 ## Quick start
 
@@ -164,6 +164,73 @@ External solvers run as separate executables through `run_solver`, which hashes 
 reuses matching successful runs, and terminates the process group on timeout. `SizingController`
 trials one declared binding change at a time and keeps it only when the margin improves.
 
+## CAx connectors
+
+`design_graph.connectors` runs open-source CAx tools as separate processes, so no GPL code is
+linked into the package. A connector copies your input deck (a file or a case directory) into a
+work directory and fills its placeholders from parameters. It then runs the tool through
+`run_solver` and reads the tool's own output files into named quantities. A run is reused while
+the rendered inputs, parameters and command are unchanged.
+
+> **Untested against the real tools.** The connectors have not yet been run against real
+> installations of these tools. The test suite drives them with fake executables that write each
+> tool's output format. The command lines (flags such as `kicad-cli pcb drc --format json`,
+> `gmsh -format msh41`, `ccx -v`) follow each tool's documented usage but are unverified. Run one
+> known case per tool and check the outputs before you rely on a connector for evidence. Reports
+> and fixes are welcome.
+
+| Connector | Tool | Kind | You provide | Outputs |
+|---|---|---|---|---|
+| `opencascade` | Open CASCADE (OCP, CadQuery, pythonocc) | CAD kernel | Python script, run by an interpreter with the bindings | what the script writes to `results.json` |
+| `freecad` | FreeCAD (`freecadcmd`) | CAD | Python script | `results.json` |
+| `openscad` | OpenSCAD | CAD | `.scad` model | volume, area and extents of the exported STL |
+| `gmsh` | Gmsh | Meshing | `.geo` script | node and element counts |
+| `calculix` | CalculiX (`ccx`) | FEA | `.inp` deck with `*NODE PRINT` / `*EL PRINT` | max displacement, max von Mises stress, reaction force totals per set |
+| `code_aster` | code_aster (`run_aster`) | FEA | `.export` + `.comm` (support files) | `results.json` written by the `.comm` file |
+| `elmer` | Elmer FEM (`ElmerSolver`) | Multiphysics | `.sif` with SaveScalars | last row of the scalars file |
+| `openfoam` | OpenFOAM | CFD | case directory (`Allrun` or a solver) | last row of each function object under `postProcessing/` |
+| `su2` | SU2 (`SU2_CFD`) | CFD | `.cfg` writing a CSV history | last row of `history.csv` |
+| `kicad` | KiCad (`kicad-cli`) | ECAD | `.kicad_pcb` board | DRC violation, error, warning and unconnected counts |
+
+A placeholder is `{{name}}` for a dimensionless parameter or `{{name:unit}}`, which writes the
+parameter converted to that unit. Every placeholder needs a parameter, and every parameter must be
+used. `$` macros in OpenFOAM dictionaries are left alone. Units of outputs are never guessed. Most
+tools do not record units, so you declare them (`-u length=mm -u stress=MPa`, or per output name).
+An output with no unit can be printed but not recorded as evidence. Each tool is found through
+`--exe`, then `$DG_<ID>_EXE`, then `PATH`.
+
+```sh
+dg connectors list                                   # which tools are installed, and their versions
+dg connectors run calculix job.inp -w runs/c1 \
+    --params-from model.yaml:SYS --attr x -u length=mm -u stress=MPa
+dg connectors run calculix job.inp -w runs/c1 --params-from model.yaml:SYS --attr x \
+    -u length=mm -u stress=MPa --record model.yaml --output max_von_mises.EALL \
+    --case C1 --requirement R1 --by A1 --evidence-id E-C1-1
+```
+
+`--record` appends the output to the model as evidence. The evidence is bound to the current basis
+of the requirement and case. Its provenance is `<connector>:<output>` with the run's input hash
+and tool version. Recording is refused when the run's tool version differs from the version in the
+case's `ToolDeclaration`, or when the new evidence would make the model invalid. In Python:
+`get_connector(...).run(...)`, `parameters_from_part`, `evidence_from_run` and `declare_tool`.
+
+## Requirements engineering templates
+
+`templates/` holds two starting points:
+
+- `requirement-cards.yaml`: a fill-in card file. It has one card for each relation (`le`, `ge`,
+  `range`, `eq`), a card with a unit, a TBC card and a qualitative card, with the field rules in
+  comments.
+- `requirements-engineering.yaml`: a process template with three stages: elicitation and
+  specification, verification planning and execution (tools and connector evidence), and review
+  and sign-off. It reuses the stage ids of the process rules, so the built-in rules report into it.
+
+```sh
+dg requirements templates/requirement-cards.yaml
+dg model import-cards templates/requirement-cards.yaml --subject SYS -o model.yaml
+dg process status model.yaml --template templates/requirements-engineering.yaml
+```
+
 ## Formal ontology (OWL 2 and SHACL)
 
 The system model is published as a formal ontology in `ontology/`:
@@ -223,7 +290,9 @@ src/design_graph/
   core/          domain-neutral computation graph (rules, provenance, caching)
   interchange/   requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, graph viewer
   engineering/   external solver runner, trial sizing controller
+  connectors/    connectors to ten open-source CAx tools, output readers, evidence bridge
 docs/            walkthrough
+templates/       requirement-card template and requirements-engineering process template
 ontology/        generated OWL vocabulary and SHACL shapes (Turtle)
 conformance/     verification semantics spec, golden vectors, independent checker
 examples/        synthetic example inputs

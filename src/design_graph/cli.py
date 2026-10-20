@@ -245,6 +245,166 @@ def ontology_export(output_dir: Path, fmt: str) -> None:
         click.echo(f"  - {line}")
 
 
+@main.group("connectors")
+def connectors_group() -> None:
+    """Connectors to open-source CAx tools, run as separate executables."""
+
+
+@connectors_group.command("list")
+@click.option("--no-detect", is_flag=True, help="Do not look for the installed tools.")
+def connectors_list(no_detect: bool) -> None:
+    """List the connectors and whether each tool is installed."""
+
+    from design_graph.connectors import CONNECTORS
+
+    for cls in CONNECTORS.values():
+        connector = cls()
+        status = ""
+        if not no_detect:
+            info = connector.detect()
+            status = (
+                f"found {info.executable} ({info.version or 'version unknown'})"
+                if info
+                else f"not found (set {connector.env_var})"
+            )
+        click.echo(f"{cls.id:12} {cls.category:12} {cls.name:14} {cls.license:40} {status}")
+        click.echo(f"    in:  {cls.inputs}")
+        click.echo(f"    out: {cls.outputs}")
+
+
+def _pairs(values: tuple[str, ...], what: str) -> dict[str, str]:
+    pairs: dict[str, str] = {}
+    for value in values:
+        name, sep, rest = value.partition("=")
+        if not sep or not name.strip():
+            raise click.BadParameter(f"{value!r} is not NAME=VALUE", param_hint=what)
+        pairs[name.strip()] = rest.strip()
+    return pairs
+
+
+@connectors_group.command("run")
+@click.argument("connector_id")
+@click.argument("deck", type=click.Path(exists=True, path_type=Path))
+@click.option("-w", "--workdir", required=True, type=click.Path(file_okay=False, path_type=Path))
+@click.option("-p", "--param", "params", multiple=True, help="NAME=VALUE [UNIT], repeatable.")
+@click.option(
+    "--params-from",
+    help="MODEL.yaml:PART: use the part's attributes as parameters (before --param).",
+)
+@click.option("--attr", "attrs", multiple=True, help="With --params-from: only these attributes.")
+@click.option("-u", "--unit", "units", multiple=True, help="OUTPUT_OR_KIND=UNIT, repeatable.")
+@click.option("-O", "--option", "options", multiple=True, help="Connector option NAME=VALUE.")
+@click.option("--support", multiple=True, type=click.Path(exists=True, dir_okay=False))
+@click.option("--exe", help="Tool executable (default: $DG_<ID>_EXE, then PATH).")
+@click.option("--timeout", default=3600.0, show_default=True, help="Seconds.")
+@click.option("--json", "as_json", is_flag=True, help="Emit the run record as JSON.")
+@click.option(
+    "--record",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Model file to append one output as evidence to.",
+)
+@click.option("--output", "output_name", help="With --record: the output to record.")
+@click.option("--case", help="With --record: verification case id.")
+@click.option("--requirement", help="With --record: requirement id.")
+@click.option("--by", "created_by", help="With --record: principal id creating the evidence.")
+@click.option("--evidence-id", help="With --record: id of the new evidence.")
+@click.option("--date", help="With --record: ISO date (default today).")
+def connectors_run(
+    connector_id: str,
+    deck: Path,
+    workdir: Path,
+    params: tuple[str, ...],
+    params_from: str | None,
+    attrs: tuple[str, ...],
+    units: tuple[str, ...],
+    options: tuple[str, ...],
+    support: tuple[str, ...],
+    exe: str | None,
+    timeout: float,
+    as_json: bool,
+    record: Path | None,
+    output_name: str | None,
+    case: str | None,
+    requirement: str | None,
+    created_by: str | None,
+    evidence_id: str | None,
+    date: str | None,
+) -> None:
+    """Run CONNECTOR_ID on DECK in WORKDIR and print its outputs; optionally record evidence."""
+
+    from datetime import date as today
+
+    from design_graph.connectors import (
+        ConnectorError,
+        evidence_from_run,
+        get_connector,
+        parameters_from_part,
+    )
+    from design_graph.connectors.base import Parameter
+    from design_graph.model import ModelError, dump_model, load_model, validate_model
+    from design_graph.model.units import Quantity
+
+    record_args = (output_name, case, requirement, created_by, evidence_id)
+    if record is not None and not all(record_args):
+        raise click.UsageError(
+            "--record needs --output, --case, --requirement, --by and --evidence-id"
+        )
+    parameters: dict[str, Parameter] = {}
+    try:
+        if params_from:
+            model_path, _, part = params_from.rpartition(":")
+            parameters.update(
+                parameters_from_part(load_model(Path(model_path)), part, list(attrs) or None)
+            )
+        for name, text in _pairs(params, "--param").items():
+            number, _, unit = text.partition(" ")
+            parameters[name] = Quantity(float(number), unit.strip())
+        connector = get_connector(
+            connector_id, exe, units=_pairs(units, "--unit"), options=_pairs(options, "--option")
+        )
+        run = connector.run(
+            deck, workdir, parameters=parameters, support=list(support), timeout_s=timeout
+        )
+    except (ConnectorError, ModelError, OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    if as_json:
+        click.echo(json.dumps(run.model_dump(mode="json"), indent=2))
+    else:
+        reused = " (reused)" if run.reused else ""
+        click.echo(f"{run.connector} {run.tool_version or '?'}{reused} input {run.input_hash[:12]}")
+        for name, value in run.outputs.items():
+            flag = "  (unit undeclared)" if name in run.undeclared else ""
+            click.echo(f"  {name:40} {value.value:.6g} {value.unit}{flag}")
+    if record is None:
+        return
+    assert output_name and case and requirement and created_by and evidence_id
+    try:
+        model = load_model(record)
+        before = {(f.code, f.element) for f in validate_model(model) if f.severity == "error"}
+        evidence = evidence_from_run(
+            model,
+            run,
+            output=output_name,
+            id=evidence_id,
+            case=case,
+            requirement=requirement,
+            created_by=created_by,
+            date=date or today.today().isoformat(),
+        )
+        model.evidence.append(evidence)
+        new = [
+            f
+            for f in validate_model(model)
+            if f.severity == "error" and (f.code, f.element) not in before
+        ]
+        if new:
+            raise click.ClickException(f"not recorded: {new[0].code} {new[0].message}")
+        dump_model(model, record)
+    except (ConnectorError, ModelError, OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    click.echo(f"recorded {evidence_id} in {record}")
+
+
 @main.group("process")
 def process_group() -> None:
     """Process layer: stage status, open items, and agent task plans."""
