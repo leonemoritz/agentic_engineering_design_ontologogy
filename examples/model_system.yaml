@@ -2,14 +2,14 @@
 # Example system model: one requirement satisfied, one failing, one not yet verified.
 format_version: 1
 principals:
-- id: agent
-  name: Design agent
+- id: A1
+  name: Agent
   doc: ''
   withdrawn: false
   kind: agent
   roles: []
-- id: jane
-  name: J. Engineer
+- id: H1
+  name: Human principal
   doc: ''
   withdrawn: false
   kind: human
@@ -18,85 +18,82 @@ principals:
   - verifier
   - witness
 tools:
-- id: plate-model
+- id: T1
   name: ''
   doc: ''
   withdrawn: false
   version: '1'
-  intended_use: Closed-form plate and mass estimates
-  declared_by: jane
+  intended_use: Computes x and y
+  declared_by: H1
 needs:
-- id: N-LIGHT
+- id: N1
   name: ''
   doc: ''
   withdrawn: false
-  stakeholder: Program
-  rationale: Launch mass budget
-- id: N-SEAL
+  stakeholder: stakeholder
+  rationale: N1 holds
+- id: N2
   name: ''
   doc: ''
   withdrawn: false
-  stakeholder: Operations
-  rationale: Protect electronics
-- id: N-STIFF
+  stakeholder: stakeholder
+  rationale: N2 holds
+- id: N3
   name: ''
   doc: ''
   withdrawn: false
-  stakeholder: Program
-  rationale: Avoid coupling with launcher modes
+  stakeholder: stakeholder
+  rationale: N3 holds
 parts:
-- id: ENCL
-  name: Enclosure
+- id: SYS
+  name: System
   doc: ''
   withdrawn: false
   parent: null
   attributes:
-    mass:
-      value: 0.42
-      unit: kg
-    f1:
-      value: 280.0
-      unit: Hz
-    sealed:
-      value: 1.0
+    x:
+      value: 2.8
+      unit: ''
+    y:
+      value: 4.6
       unit: ''
 requirements:
-- id: R-FREQ
+- id: R1
   name: ''
   doc: ''
   withdrawn: false
-  text: The enclosure shall have a first natural frequency of at least 300 Hz.
-  subject: ENCL
-  attribute: f1
-  relation: ge
-  target:
-    value: 300.0
-    unit: Hz
-  upper: null
-  tolerance: null
-  expected: true
-  tbc: false
-- id: R-MASS
-  name: ''
-  doc: ''
-  withdrawn: false
-  text: The enclosure shall have a mass of at most 450 g.
-  subject: ENCL
-  attribute: mass
+  text: SYS shall have x <= 3.
+  subject: SYS
+  attribute: x
   relation: le
   target:
-    value: 450.0
-    unit: g
+    value: 3.0
+    unit: ''
   upper: null
   tolerance: null
   expected: true
   tbc: false
-- id: R-SEAL
+- id: R2
   name: ''
   doc: ''
   withdrawn: false
-  text: The enclosure shall be sealed against dust ingress.
-  subject: ENCL
+  text: SYS shall have y >= 5.
+  subject: SYS
+  attribute: y
+  relation: ge
+  target:
+    value: 5.0
+    unit: ''
+  upper: null
+  tolerance: null
+  expected: true
+  tbc: false
+- id: R3
+  name: ''
+  doc: ''
+  withdrawn: false
+  text: SYS shall have property p.
+  subject: SYS
   attribute: null
   relation: null
   target: null
@@ -105,32 +102,32 @@ requirements:
   expected: true
   tbc: false
 cases:
-- id: C-FREQ
+- id: C1
   name: ''
   doc: ''
   withdrawn: false
   method: A
-  level: component
+  level: ''
   stage: ''
   procedure: ''
-  tool: plate-model
-- id: C-MASS
+  tool: T1
+- id: C2
   name: ''
   doc: ''
   withdrawn: false
   method: A
-  level: component
+  level: ''
   stage: ''
   procedure: ''
-  tool: plate-model
-- id: C-SEAL
+  tool: T1
+- id: C3
   name: ''
   doc: ''
   withdrawn: false
   method: I
-  level: component
+  level: ''
   stage: ''
-  procedure: Visual seam and gasket inspection
+  procedure: Inspect SYS for property p
   tool: null
 relationships:
 - id: rel-n1
@@ -138,166 +135,166 @@ relationships:
   doc: ''
   withdrawn: false
   kind: refine
-  source: R-MASS
-  target: N-LIGHT
+  source: R1
+  target: N1
   rationale: ''
 - id: rel-n2
   name: ''
   doc: ''
   withdrawn: false
   kind: refine
-  source: R-FREQ
-  target: N-STIFF
+  source: R2
+  target: N2
   rationale: ''
 - id: rel-n3
   name: ''
   doc: ''
   withdrawn: false
   kind: refine
-  source: R-SEAL
-  target: N-SEAL
+  source: R3
+  target: N3
   rationale: ''
 - id: rel-s1
   name: ''
   doc: ''
   withdrawn: false
   kind: satisfy
-  source: ENCL
-  target: R-MASS
+  source: SYS
+  target: R1
   rationale: ''
 - id: rel-s2
   name: ''
   doc: ''
   withdrawn: false
   kind: satisfy
-  source: ENCL
-  target: R-FREQ
+  source: SYS
+  target: R2
   rationale: ''
 - id: rel-s3
   name: ''
   doc: ''
   withdrawn: false
   kind: satisfy
-  source: ENCL
-  target: R-SEAL
+  source: SYS
+  target: R3
   rationale: ''
 - id: rel-v1
   name: ''
   doc: ''
   withdrawn: false
   kind: verify
-  source: C-MASS
-  target: R-MASS
+  source: C1
+  target: R1
   rationale: ''
 - id: rel-v2
   name: ''
   doc: ''
   withdrawn: false
   kind: verify
-  source: C-FREQ
-  target: R-FREQ
+  source: C2
+  target: R2
   rationale: ''
 - id: rel-v3
   name: ''
   doc: ''
   withdrawn: false
   kind: verify
-  source: C-SEAL
-  target: R-SEAL
+  source: C3
+  target: R3
   rationale: ''
 evidence:
-- id: E-FREQ
+- id: E1
   name: ''
   doc: ''
   withdrawn: false
-  case: C-FREQ
-  requirement: R-FREQ
-  created_by: agent
+  case: C1
+  requirement: R1
+  created_by: A1
   date: '2026-03-01'
-  basis_hash: f7fe2d65abfcc4e30fe96e49c08e6c8771644f7ce63bfbeeb50fb4d4bac30c31
+  basis_hash: 4fcacc338640ac24944490cd5203252b4324aad5c6ba8a078e9179a0d593ef12
   value:
-    value: 280.0
-    unit: Hz
+    value: 2.8
+    unit: ''
   uncertainty:
-    value: 15.0
-    unit: Hz
+    value: 0.1
+    unit: ''
   provenance:
-    node: plate_frequency
+    node: x
     input_hash: '00000000'
     function: ''
   attestations: []
-- id: E-MASS
+- id: E2
   name: ''
   doc: ''
   withdrawn: false
-  case: C-MASS
-  requirement: R-MASS
-  created_by: agent
+  case: C2
+  requirement: R2
+  created_by: A1
   date: '2026-03-01'
-  basis_hash: 6e6b3b26fb79cc9cb8114074f061afd99d6a4b8bf984699ade58a043f08849c0
+  basis_hash: 795b3308bcc16920f5c78d23ad02dbfdad8ac73cf4471b9be169c260eedf2369
   value:
-    value: 0.42
-    unit: kg
+    value: 4.6
+    unit: ''
   uncertainty:
-    value: 10.0
-    unit: g
+    value: 0.1
+    unit: ''
   provenance:
-    node: mass
+    node: y
     input_hash: '00000000'
     function: ''
   attestations: []
 approvals:
-- id: apr-C-FREQ
+- id: apr-C1
   name: ''
   doc: ''
   withdrawn: false
-  element: C-FREQ
-  content_hash: d8ee30f3bf96f7c9be4993dbd3f1fd6588a84efc63dbcfcc158e8bdef29c0754
-  principal: jane
+  element: C1
+  content_hash: c447109dd2243395947cbad069fb5f37d9402b12080a07fea54b453f94b10fe0
+  principal: H1
   date: '2026-03-01'
   note: ''
-- id: apr-C-MASS
+- id: apr-C2
   name: ''
   doc: ''
   withdrawn: false
-  element: C-MASS
-  content_hash: a7ca869b6c9f93fce1405dc871ce7e70761b349acc713e18b232966a6d6d7ffc
-  principal: jane
+  element: C2
+  content_hash: 615d8949b0519a514c73b6b5b9bd7fe349420efb8aefdd2a01c8984812a781f7
+  principal: H1
   date: '2026-03-01'
   note: ''
-- id: apr-C-SEAL
+- id: apr-C3
   name: ''
   doc: ''
   withdrawn: false
-  element: C-SEAL
-  content_hash: c1198c8d244b2ac86f4e52c15c3b7ba8b82ffd200f6fa81e12c234b88c945afd
-  principal: jane
+  element: C3
+  content_hash: 5a7acf2a5d54f7de2a825dfbd27cb56aa9155e32490e7bae0469b06aa3171e03
+  principal: H1
   date: '2026-03-01'
   note: ''
-- id: apr-R-FREQ
+- id: apr-R1
   name: ''
   doc: ''
   withdrawn: false
-  element: R-FREQ
-  content_hash: a734c89bc9967dc3777f0529673a676bb79300b795fe72b8c9a1ea5cbc8e973c
-  principal: jane
+  element: R1
+  content_hash: e511f79ebfe65852e6b51c74a0e076e5560c45000d2a1ef3a003610b27da6a76
+  principal: H1
   date: '2026-03-01'
   note: ''
-- id: apr-R-MASS
+- id: apr-R2
   name: ''
   doc: ''
   withdrawn: false
-  element: R-MASS
-  content_hash: 5f2b1adee204562b787444435195a75069731dc9f71a90031f5b19efaa051b42
-  principal: jane
+  element: R2
+  content_hash: a387b94fa1b745bc1723a88f266136fa55c0ac64db3202643769733a79922f24
+  principal: H1
   date: '2026-03-01'
   note: ''
-- id: apr-R-SEAL
+- id: apr-R3
   name: ''
   doc: ''
   withdrawn: false
-  element: R-SEAL
-  content_hash: 85543b7a33e9144402c997d4daeb6b817effbb11a8cc6c33cf02bf6aa6d83e0a
-  principal: jane
+  element: R3
+  content_hash: 539984c22276dbda3b431f58769090520a94782bc00e09b5aeadb83bb2fa5757
+  principal: H1
   date: '2026-03-01'
   note: ''

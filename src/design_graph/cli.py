@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Command-line entry point for Design Intent Graph."""
+"""Command-line entry point for Agentic Engineering Design Ontology."""
 
 from __future__ import annotations
 
@@ -23,7 +23,9 @@ def doctor() -> None:
     version = sys.version_info
     click.echo(f"Python: {version.major}.{version.minor}.{version.micro}")
     if version < (3, 12):
-        click.echo("ERROR: Design Intent Graph requires Python 3.12 or newer.", err=True)
+        click.echo(
+            "ERROR: Agentic Engineering Design Ontology requires Python 3.12 or newer.", err=True
+        )
         raise click.exceptions.Exit(1)
     try:
         import pydantic
@@ -72,92 +74,6 @@ def check_requirement_file(requirement_file: Path) -> None:
             click.echo(f"ERROR: {issue}", err=True)
         raise click.exceptions.Exit(1)
     click.echo("Requirement fidelity: passed")
-
-
-@main.command("run")
-@click.argument("project_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("--no-solvers", is_flag=True, help="Run the analytic synthetic slice only.")
-@click.option(
-    "--pdf", "make_pdf", is_flag=True, help="Export report.pdf using the optional pdf extra."
-)
-@click.option(
-    "--step",
-    "make_step",
-    is_flag=True,
-    help="Export STEP and mass properties using the optional cad extra.",
-)
-@click.option(
-    "-o",
-    "--output-dir",
-    type=click.Path(file_okay=False, path_type=Path),
-    default=Path("build/design_graph"),
-)
-def run_project(
-    project_yaml: Path,
-    no_solvers: bool,
-    make_pdf: bool,
-    make_step: bool,
-    output_dir: Path,
-) -> None:
-    """Evaluate the synthetic enclosure graph and write review artifacts."""
-
-    del no_solvers  # Solver tiers are opt-in and are not part of this baseline graph.
-    from design_graph.domains.enclosure import build_enclosure_graph, load_project
-    from design_graph.engineering.geometry import calculate_mass_properties, export_step
-    from design_graph.interchange.report import write_review_package
-    from design_graph.interchange.viewer import render_viewer
-
-    try:
-        project = load_project(project_yaml)
-        graph = build_enclosure_graph(project)
-        graph.check()
-        evaluated = graph.evaluate(["verification", "draft"])
-        result = evaluated["verification"]
-        output_dir.mkdir(parents=True, exist_ok=True)
-        graph_path = output_dir / "graph.json"
-        graph.to_json(graph_path)
-        matrix_path = output_dir / "verification.json"
-        matrix_path.write_text(
-            json.dumps([row.model_dump(mode="json") for row in result], indent=2) + "\n",
-            encoding="utf-8",
-        )
-        viewer_path = output_dir / "graph.html"
-        graph_data = graph.to_dict()
-        viewer_path.write_text(render_viewer(graph_data), encoding="utf-8")
-        if make_step:
-            if project.material_density_kg_m3 is None:
-                raise ValueError("STEP/mass export requires project.material_density_kg_m3")
-            region = evaluated["draft"].regions[0]
-            export_step(
-                region,
-                project.layout.base_thickness_mm,
-                output_dir / "enclosure_base.step",
-            )
-            properties = calculate_mass_properties(
-                region,
-                project.layout.base_thickness_mm,
-                project.material_density_kg_m3,
-            )
-            (output_dir / "mass_properties.json").write_text(
-                json.dumps(properties.model_dump(mode="json"), indent=2) + "\n",
-                encoding="utf-8",
-            )
-        package_path = write_review_package(
-            output_dir,
-            rows=result,
-            graph_data=graph_data,
-            title=project.name,
-            pdf=make_pdf,
-            cad=make_step,
-        )
-    except (OSError, RuntimeError, ValueError) as error:
-        raise click.ClickException(str(error)) from error
-    click.echo(f"Verification rows: {matrix_path}")
-    click.echo(f"Graph data: {graph_path}")
-    click.echo(f"Graph viewer: {viewer_path}")
-    click.echo(f"Review package: {package_path}")
-    if make_step:
-        click.echo(f"STEP solid: {output_dir / 'enclosure_base.step'}")
 
 
 @main.group("model")

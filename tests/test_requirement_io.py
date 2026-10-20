@@ -16,15 +16,16 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_load_json_requirement_cards_and_fidelity() -> None:
     cards = load_requirement_cards(ROOT / "tests/fixtures/synthetic_requirements.json")
     assert len(cards) == 1
-    assert cards[0].id == "SYN-JSON-1"
+    assert cards[0].id == "R1"
     assert check_fidelity(cards[0]) == []
 
 
 def test_load_synthetic_reqif_objects_and_xhtml_quote() -> None:
     cards = load_reqif(ROOT / "tests/fixtures/synthetic_requirements.reqif")
     assert len(cards) == 1
-    assert cards[0].id == "SYN-REQ-XML-1"
-    assert cards[0].quote == "Maximum envelope dimension is 25 mm."
+    assert cards[0].id == "R2"
+    assert cards[0].quote == "SYS shall have l <= 25 mm."
+    assert (cards[0].relation, cards[0].value, cards[0].unit) == ("le", 0.025, "m")
     assert check_fidelity(cards[0]) == []
 
 

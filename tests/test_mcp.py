@@ -17,7 +17,7 @@ BRACKET = "model_process_bracket.yaml"
 
 @pytest.fixture
 def ws(tmp_path: Path) -> Workspace:
-    for name in (BRACKET, "model_enclosure.yaml"):
+    for name in (BRACKET, "model_system.yaml"):
         shutil.copy(EXAMPLES / name, tmp_path / name)
     return Workspace(tmp_path)
 

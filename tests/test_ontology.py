@@ -34,7 +34,7 @@ from design_graph.model.engineering import Review  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 BRACKET = ROOT / "examples" / "model_process_bracket.yaml"
-ENCLOSURE = ROOT / "examples" / "model_enclosure.yaml"
+SYSTEM = ROOT / "examples" / "model_system.yaml"
 EL = Namespace(DEFAULT_BASE)
 
 
@@ -67,7 +67,7 @@ def test_property_conflicts_are_refused(monkeypatch: pytest.MonkeyPatch) -> None
         ontology_graph()
 
 
-@pytest.mark.parametrize("path", [BRACKET, ENCLOSURE])
+@pytest.mark.parametrize("path", [BRACKET, SYSTEM])
 def test_examples_conform_and_are_complete(path: Path) -> None:
     model = load_model(path)
     data = model_graph(model)
@@ -95,7 +95,7 @@ def test_relationships_are_reified_and_direct() -> None:
 
 
 def test_formats_round_trip() -> None:
-    data = model_graph(load_model(ENCLOSURE))
+    data = model_graph(load_model(SYSTEM))
     for fmt, name in (("jsonld", "json-ld"), ("xml", "xml"), ("nt", "nt")):
         again = Graph().parse(data=ontology.serialize(data, fmt), format=name)
         assert isomorphic(again, data), fmt
@@ -110,7 +110,7 @@ def _requirement_satisfies(m: SystemModel) -> None:
 
 
 def _agent_approves(m: SystemModel) -> None:
-    m.approvals[0].principal = "agent"
+    m.approvals[0].principal = "A1"
 
 
 def _agent_declares_tool(m: SystemModel) -> None:
@@ -132,7 +132,7 @@ def _dangling_case(m: SystemModel) -> None:
     [
         (BRACKET, _set_subject_to_need),
         (BRACKET, _requirement_satisfies),
-        (ENCLOSURE, _agent_approves),
+        (SYSTEM, _agent_approves),
         (BRACKET, _agent_declares_tool),
         (BRACKET, _self_review),
         (BRACKET, _dangling_case),

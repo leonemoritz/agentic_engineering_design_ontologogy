@@ -7,13 +7,14 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import yaml
 
-from design_graph.model.cards import RequirementCard, RequirementStatus
+from design_graph.model.cards import RequirementCard
 
 _TAG_PREFIX = re.compile(r"\{[^}]+\}")
+_CARD_FIELDS = set(RequirementCard.model_fields) - {"id"}
 
 
 def load_requirement_cards(path: str | Path) -> list[RequirementCard]:
@@ -39,8 +40,9 @@ def load_requirement_cards(path: str | Path) -> list[RequirementCard]:
 def load_reqif(path: str | Path) -> list[RequirementCard]:
     """Import ReqIF SPEC-OBJECTS with named string, XHTML, numeric, and enum attributes.
 
-    The supported ReqIF mapping uses attribute names `kind`, `params`, `quote`, `method`, `tbc`,
-    and `status`. `params` contains JSON. The SPEC-OBJECT IDENTIFIER becomes the card ID.
+    Attribute LONG-NAMEs map to card fields: `quote`, `method`, `attribute`, `relation`, `value`,
+    `upper`, `tolerance`, `unit`, `tbc` and `status`. Other attributes are ignored. The
+    SPEC-OBJECT IDENTIFIER becomes the card ID.
     """
 
     source = Path(path)
@@ -127,25 +129,12 @@ def load_reqif(path: str | Path) -> list[RequirementCard]:
         if not attributes:
             continue
         try:
-            kind = attributes["kind"]
-            params_value = attributes["params"]
-            params = json.loads(params_value) if isinstance(params_value, str) else params_value
-            quote = attributes["quote"]
-            method = attributes.get("method", "T")
-            tbc = _as_bool(attributes.get("tbc", False))
-            status = cast(RequirementStatus, str(attributes.get("status", "active")).casefold())
-            cards.append(
-                RequirementCard(
-                    id=identifier,
-                    kind=kind,
-                    params=params,
-                    quote=quote,
-                    method=method,
-                    tbc=tbc,
-                    status=status,
-                )
-            )
-        except (KeyError, TypeError, ValueError) as error:
+            fields = {k: v for k, v in attributes.items() if k in _CARD_FIELDS}
+            fields.setdefault("method", "T")
+            fields["tbc"] = _as_bool(fields.get("tbc", False))
+            fields["status"] = str(fields.get("status", "active")).casefold()
+            cards.append(RequirementCard.model_validate({"id": identifier, **fields}))
+        except (TypeError, ValueError) as error:
             raise ValueError(
                 f"cannot map ReqIF SPEC-OBJECT {identifier!r} to a requirement card: {error}"
             ) from error

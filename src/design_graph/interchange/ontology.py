@@ -283,7 +283,7 @@ def _bind(graph: Graph) -> Graph:
 
 def _version() -> str:
     try:
-        return version("design-intent-graph")
+        return version("agentic-engineering-design-ontology")
     except PackageNotFoundError:  # pragma: no cover - running from a source tree
         return "0"
 
@@ -297,7 +297,7 @@ def ontology_graph() -> Graph:
     g = _bind(Graph())
     g.add((ONTOLOGY_IRI, RDF.type, OWL.Ontology))
     g.add((ONTOLOGY_IRI, OWL.versionInfo, Literal(_version())))
-    g.add((ONTOLOGY_IRI, DCTERMS.title, Literal("Design Intent Graph ontology", lang="en")))
+    g.add((ONTOLOGY_IRI, DCTERMS.title, Literal("Agentic Engineering Design Ontology", lang="en")))
     g.add((ONTOLOGY_IRI, DCTERMS.license, URIRef("https://www.apache.org/licenses/LICENSE-2.0")))
     g.add(
         (

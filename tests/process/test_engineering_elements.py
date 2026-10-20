@@ -10,7 +10,7 @@ from design_graph.model.baseline import changes_since, element_hashes
 from design_graph.model.elements import Baseline
 from design_graph.model.engineering import FailureMode, Review
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples" / "model_enclosure.yaml"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples" / "model_system.yaml"
 
 
 def codes(model) -> set[str]:  # type: ignore[no-untyped-def]

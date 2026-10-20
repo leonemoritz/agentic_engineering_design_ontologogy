@@ -1,0 +1,107 @@
+{
+  "suite": "design-graph-verification/0.1",
+  "cases": [
+    {
+      "title": "key order",
+      "input": "{\"b\": 1, \"a\": {\"d\": 2, \"c\": 3}}",
+      "canonical": "{\"a\":{\"c\":3,\"d\":2},\"b\":1}",
+      "sha256": "78d48859c3252943aab7306f76c80f3f07783582e05ab8f944ce0696f2dbfc67"
+    },
+    {
+      "title": "empty containers and literals",
+      "input": "{\"x\": [], \"y\": {}, \"t\": true, \"f\": false, \"n\": null}",
+      "canonical": "{\"f\":false,\"n\":null,\"t\":true,\"x\":[],\"y\":{}}",
+      "sha256": "375f08116b80b584cbba36e53c36551b440d5d40b88b6410fb1e962e523c187f"
+    },
+    {
+      "title": "integer stays integer",
+      "input": "{\"tier\": 2}",
+      "canonical": "{\"tier\":2}",
+      "sha256": "7b4f53f2dbdf39ca604bdf1757597dd7134507ff1efb5e379044dcc4be176fe6"
+    },
+    {
+      "title": "float keeps its fraction",
+      "input": "{\"value\": 2.0}",
+      "canonical": "{\"value\":2.0}",
+      "sha256": "fbc786c7adbdd0614ade02569b7a42f1f52be7af1c7a5f50995f95242288dbe6"
+    },
+    {
+      "title": "negative zero",
+      "input": "{\"value\": -0.0}",
+      "canonical": "{\"value\":-0.0}",
+      "sha256": "c848a4efa987f46ba3bfd46242333afcb1c68c3240e0f35ae9d269b1c980648b"
+    },
+    {
+      "title": "short round-trip digits",
+      "input": "{\"value\": 0.1}",
+      "canonical": "{\"value\":0.1}",
+      "sha256": "097a678e9d1339735cc744964f1c2b1271b2e650d7c59c72d2ff1c93064ceb6e"
+    },
+    {
+      "title": "fixed notation up to 1e16",
+      "input": "{\"value\": 1e15}",
+      "canonical": "{\"value\":1000000000000000.0}",
+      "sha256": "fdf8fc7ac54b0c8205b61e7d06e65e6833ef93b9631da9e8d92ad12d59efbb29"
+    },
+    {
+      "title": "exponent from 1e16",
+      "input": "{\"value\": 1e16}",
+      "canonical": "{\"value\":1e+16}",
+      "sha256": "f6b1d8095563fb7f57c554825c9d5402bfc8f69255edfaed38587394a2252515"
+    },
+    {
+      "title": "exponent below 1e-4",
+      "input": "{\"value\": 0.00001}",
+      "canonical": "{\"value\":1e-05}",
+      "sha256": "ae608be085de5ef7c25d252b967f74344a8a3ab7743e361cfea45569321eb6b6"
+    },
+    {
+      "title": "fixed notation at 1e-4",
+      "input": "{\"value\": 0.0001}",
+      "canonical": "{\"value\":0.0001}",
+      "sha256": "4e8c736958cd287696c5db2674af41fd38337bb6aa1a732bbfe5d3ff3063a809"
+    },
+    {
+      "title": "long mantissa",
+      "input": "{\"value\": 123456789012345678.0}",
+      "canonical": "{\"value\":1.2345678901234568e+17}",
+      "sha256": "52be4f0fa68f2cdbcf961ad497b3154d902aaeca95fd965d5bc7f2e995f5cddb"
+    },
+    {
+      "title": "small exponent padded",
+      "input": "{\"value\": 1.5e-7}",
+      "canonical": "{\"value\":1.5e-07}",
+      "sha256": "e25756dad1831e24f76e9d743f1e87c436946dcebb5c09f40de75f65b1df53be"
+    },
+    {
+      "title": "list order is significant",
+      "input": "{\"roles\": [\"witness\", \"approver\"]}",
+      "canonical": "{\"roles\":[\"witness\",\"approver\"]}",
+      "sha256": "ab952562af1c512235b93e703896c2d87a9f73fd0a8e3e25ac99759a04d29220"
+    },
+    {
+      "title": "non-ASCII escaped",
+      "input": "{\"text\": \"Wärme\"}",
+      "canonical": "{\"text\":\"W\\u00e4rme\"}",
+      "sha256": "464dd90c277dc8a6f037a4645b4694703ff972e2811a438e1fa53544f25b0267"
+    },
+    {
+      "title": "astral character as surrogate pair",
+      "input": "{\"text\": \"\\ud83d\\udd25\"}",
+      "canonical": "{\"text\":\"\\ud83d\\udd25\"}",
+      "sha256": "35ae9784d361fe8e85387e8a567d470f6a40377ca0af240a2c8337efc0e4e3a6"
+    },
+    {
+      "title": "control and delete characters",
+      "input": "{\"text\": \"a\\tb\\u0001c\\u007f\"}",
+      "canonical": "{\"text\":\"a\\tb\\u0001c\\u007f\"}",
+      "sha256": "af1977f4ebf568ec25270233def3b99fc1ccea33090bdee8c3a36973dcc980ff"
+    },
+    {
+      "title": "quotes and backslashes",
+      "input": "{\"text\": \"say \\\"hi\\\" \\\\ bye\"}",
+      "canonical": "{\"text\":\"say \\\"hi\\\" \\\\ bye\"}",
+      "sha256": "ff7ed5615bc8fa39249b4caa43bf6d60b74e997f3e8fa97e7d7c262f88a68714"
+    }
+  ]
+}

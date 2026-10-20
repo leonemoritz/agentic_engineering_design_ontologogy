@@ -1,9 +1,0 @@
-# SPDX-License-Identifier: Apache-2.0
-clearance_mm: 3
-wall_thickness_mm: 2
-base_thickness_mm: 2
-lid_gap_mm: 2
-seam_pitch_mm: 18
-vent_width_mm: 4
-tool_radius_mm: 1
-minimum_web_mm: 2

@@ -4,8 +4,8 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "design-intent-graph"
-version = "0.1.0"
+name = "agentic-engineering-design-ontology"
+version = "0.2.0"
 description = "A typed, provenance-aware computation graph for engineering design."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,8 +14,6 @@ dependencies = ["pydantic>=2.6,<3", "click>=8.1,<9", "PyYAML>=6,<7", "pint>=0.24
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "build>=1.2,<2", "types-PyYAML>=6,<7", "playwright>=1.45,<2", "mcp>=2.3,<3", "rdflib>=7.1,<8", "pyshacl>=0.30,<1"]
-cad = ["cadquery>=2.4,<3"]
-pdf = ["playwright>=1.45,<2"]
 mcp = ["mcp>=2.3,<3"]
 ontology = ["rdflib>=7.1,<8", "pyshacl>=0.30,<1"]
 
@@ -27,7 +25,7 @@ design-graph-mcp = "design_graph.mcp.server:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"design_graph.interchange" = ["assets/graph-viewer.html", "assets/review_template.yaml"]
+"design_graph.interchange" = ["assets/graph-viewer.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

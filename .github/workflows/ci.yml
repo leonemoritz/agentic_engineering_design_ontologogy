@@ -15,8 +15,8 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -e '.[dev]'
       - run: python -m playwright install chromium
-      - run: ruff check src tests scripts
-      - run: ruff format --check src tests scripts
+      - run: ruff check src tests scripts conformance
+      - run: ruff format --check src tests scripts conformance
       - run: mypy src
       - run: pytest
       - run: python scripts/check_repo.py

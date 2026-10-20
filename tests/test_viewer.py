@@ -59,4 +59,4 @@ def test_view_cli_generates_single_html_file(tmp_path) -> None:
 
     assert result.exit_code == 0, result.output
     assert output_path.exists()
-    assert "Design Intent Graph" in output_path.read_text(encoding="utf-8")
+    assert "Agentic Engineering Design Ontology" in output_path.read_text(encoding="utf-8")

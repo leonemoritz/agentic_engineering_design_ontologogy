@@ -1,0 +1,252 @@
+{
+  "suite": "design-graph-verification/0.1",
+  "id": "V11",
+  "title": "An agent approval is ignored",
+  "description": "Only a human principal with the approver role can approve. Validation also reports the agent's approver role; assessment ignores the approval regardless.",
+  "references": [
+    "EPS P18",
+    "EPS C15"
+  ],
+  "model": {
+    "format_version": 1,
+    "principals": [
+      {
+        "id": "H1",
+        "name": "Human principal",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "human",
+        "roles": [
+          "approver",
+          "verifier",
+          "witness"
+        ]
+      },
+      {
+        "id": "A1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "agent",
+        "roles": [
+          "author",
+          "reviewer",
+          "approver"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "version": "1.0",
+        "intended_use": "computes attribute values",
+        "declared_by": "H1"
+      }
+    ],
+    "needs": [
+      {
+        "id": "N1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "stakeholder": "stakeholder",
+        "rationale": ""
+      }
+    ],
+    "parts": [
+      {
+        "id": "SYS",
+        "name": "System",
+        "doc": "",
+        "withdrawn": false,
+        "parent": null,
+        "attributes": {
+          "x": {
+            "value": 3.4,
+            "unit": ""
+          }
+        }
+      }
+    ],
+    "requirements": [
+      {
+        "id": "R1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "text": "SYS shall have x >= 3.",
+        "subject": "SYS",
+        "attribute": "x",
+        "relation": "ge",
+        "target": {
+          "value": 3.0,
+          "unit": ""
+        },
+        "upper": null,
+        "tolerance": null,
+        "expected": true,
+        "tbc": false
+      }
+    ],
+    "cases": [
+      {
+        "id": "C1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "method": "A",
+        "level": "",
+        "stage": "",
+        "procedure": "",
+        "tool": "T1"
+      }
+    ],
+    "assumptions": [],
+    "relationships": [
+      {
+        "id": "rel-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "refine",
+        "source": "R1",
+        "target": "N1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "satisfy",
+        "source": "SYS",
+        "target": "R1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-3",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "verify",
+        "source": "C1",
+        "target": "R1",
+        "rationale": ""
+      }
+    ],
+    "evidence": [
+      {
+        "id": "E-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "case": "C1",
+        "requirement": "R1",
+        "created_by": "A1",
+        "date": "2026-10-02",
+        "basis_hash": "3cd60cb80852ea9e97871b24cc2186dc032acc1f3a3001502c25b4b3c9604ea5",
+        "value": {
+          "value": 3.4,
+          "unit": ""
+        },
+        "uncertainty": null,
+        "provenance": {
+          "node": "SYS.x",
+          "input_hash": "b78fd19e1a91ab52eafae9a878c08654899c2a6d87cab9f58416cbc28039a00d",
+          "function": ""
+        },
+        "attestations": []
+      }
+    ],
+    "approvals": [
+      {
+        "id": "APR-R1-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "R1",
+        "content_hash": "51c3c0b86cff02b1c0bbad207e1da6747aaa81f727a2b764a3e384567b3f0b9b",
+        "principal": "A1",
+        "date": "2026-10-01",
+        "note": ""
+      },
+      {
+        "id": "APR-C1-2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "C1",
+        "content_hash": "c447109dd2243395947cbad069fb5f37d9402b12080a07fea54b453f94b10fe0",
+        "principal": "H1",
+        "date": "2026-10-01",
+        "note": ""
+      }
+    ],
+    "baselines": [],
+    "statements": [],
+    "design_rules": [],
+    "concepts": [],
+    "trade_studies": [],
+    "load_cases": [],
+    "failure_modes": [],
+    "optimizations": [],
+    "allowables": [],
+    "credibility": [],
+    "reviews": [],
+    "consistency_checks": []
+  },
+  "expected": {
+    "validation_errors": [
+      "APPROVAL_UNAUTHORIZED"
+    ],
+    "content_hashes": {
+      "H1": "c015d52cd59721dd30fea6e3447fd90e712c4f4803e24c624bf82377f69b620c",
+      "A1": "0e493d68de5bfe2496aead5576c5019ae915f9dc210a2016c08c3e7484be3cc7",
+      "T1": "6c95c9c600912e05475ce88c0edab69db13361b336088385cfecb920c0ad01a2",
+      "N1": "87539e4584f8cb34117a4957734e5811f63e80c4fbd25f3e1a28def47be2e200",
+      "SYS": "c97c9a3aee77c761f208d29d290c0ed55582341a7d26b9e6ba437cdd596aa119",
+      "R1": "51c3c0b86cff02b1c0bbad207e1da6747aaa81f727a2b764a3e384567b3f0b9b",
+      "C1": "c447109dd2243395947cbad069fb5f37d9402b12080a07fea54b453f94b10fe0",
+      "rel-1": "335cf1452dcbc6c6ef3d9ee74ea146c7dc75ef07180d5201a6ce00ee16ea51e4",
+      "rel-2": "216c43fb9fa11ce736115018daaf96ffcf50d67c17bae9d527466680d55745dc",
+      "rel-3": "ac97d09f28eb0f94fbd07a670c28c3e06bfae97236f38f2a01c0a07174942f94",
+      "E-1": "da4ed7cd79681be1b5837d902e227e7f9f66d65be4f383a2be5cbdb2a4695c1f",
+      "APR-R1-1": "d89bc5c03563c19a06803298a1510230c145759b6a41e38d10cddd926db12fb7",
+      "APR-C1-2": "0245feac002c4fedf8ba670be0ee1628762391f4b9abf1887fde891ccc00d288"
+    },
+    "basis_hashes": {
+      "R1|C1": "3cd60cb80852ea9e97871b24cc2186dc032acc1f3a3001502c25b4b3c9604ea5"
+    },
+    "assessment": [
+      {
+        "requirement": "R1",
+        "verification": "VERIFIED",
+        "satisfaction": "BLOCKED",
+        "margin_si": 0.3999999999999999,
+        "derived": [],
+        "reasons": [
+          "REQ_NOT_APPROVED"
+        ],
+        "cases": [
+          {
+            "case": "C1",
+            "status": "VERIFIED",
+            "deciding_evidence": "E-1",
+            "reasons": [],
+            "evidence": [
+              {
+                "evidence": "E-1",
+                "outcome": "pass",
+                "margin_si": 0.3999999999999999,
+                "reasons": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

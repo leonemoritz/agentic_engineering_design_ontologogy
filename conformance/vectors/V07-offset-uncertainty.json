@@ -1,0 +1,395 @@
+{
+  "suite": "design-graph-verification/0.1",
+  "id": "V07",
+  "title": "Uncertainty in an offset unit is invalid",
+  "description": "An uncertainty is a difference, so it must use delta_degC or K, not degC.",
+  "references": [
+    "EPS P12"
+  ],
+  "model": {
+    "format_version": 1,
+    "principals": [
+      {
+        "id": "H1",
+        "name": "Human principal",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "human",
+        "roles": [
+          "approver",
+          "verifier",
+          "witness"
+        ]
+      },
+      {
+        "id": "A1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "agent",
+        "roles": [
+          "author",
+          "reviewer"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "id": "T1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "version": "1.0",
+        "intended_use": "computes attribute values",
+        "declared_by": "H1"
+      }
+    ],
+    "needs": [
+      {
+        "id": "N1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "stakeholder": "stakeholder",
+        "rationale": ""
+      }
+    ],
+    "parts": [
+      {
+        "id": "SYS",
+        "name": "System",
+        "doc": "",
+        "withdrawn": false,
+        "parent": null,
+        "attributes": {
+          "x": {
+            "value": 3.4,
+            "unit": ""
+          },
+          "t": {
+            "value": 55.0,
+            "unit": "degC"
+          }
+        }
+      }
+    ],
+    "requirements": [
+      {
+        "id": "R1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "text": "SYS shall have x >= 3.",
+        "subject": "SYS",
+        "attribute": "x",
+        "relation": "ge",
+        "target": {
+          "value": 3.0,
+          "unit": ""
+        },
+        "upper": null,
+        "tolerance": null,
+        "expected": true,
+        "tbc": false
+      },
+      {
+        "id": "R2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "text": "SYS shall have t <= 60 degC.",
+        "subject": "SYS",
+        "attribute": "t",
+        "relation": "le",
+        "target": {
+          "value": 60.0,
+          "unit": "degC"
+        },
+        "upper": null,
+        "tolerance": null,
+        "expected": true,
+        "tbc": false
+      }
+    ],
+    "cases": [
+      {
+        "id": "C1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "method": "A",
+        "level": "",
+        "stage": "",
+        "procedure": "",
+        "tool": "T1"
+      },
+      {
+        "id": "C2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "method": "A",
+        "level": "",
+        "stage": "",
+        "procedure": "",
+        "tool": "T1"
+      }
+    ],
+    "assumptions": [],
+    "relationships": [
+      {
+        "id": "rel-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "refine",
+        "source": "R1",
+        "target": "N1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "satisfy",
+        "source": "SYS",
+        "target": "R1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-3",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "verify",
+        "source": "C1",
+        "target": "R1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-4",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "refine",
+        "source": "R2",
+        "target": "N1",
+        "rationale": ""
+      },
+      {
+        "id": "rel-5",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "satisfy",
+        "source": "SYS",
+        "target": "R2",
+        "rationale": ""
+      },
+      {
+        "id": "rel-6",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "kind": "verify",
+        "source": "C2",
+        "target": "R2",
+        "rationale": ""
+      }
+    ],
+    "evidence": [
+      {
+        "id": "E-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "case": "C1",
+        "requirement": "R1",
+        "created_by": "A1",
+        "date": "2026-10-02",
+        "basis_hash": "c66fe7bdfeade346ac45ede49e49ade336191075a2dca6f9e9cad135287098ee",
+        "value": {
+          "value": 3.4,
+          "unit": ""
+        },
+        "uncertainty": null,
+        "provenance": {
+          "node": "SYS.x",
+          "input_hash": "b78fd19e1a91ab52eafae9a878c08654899c2a6d87cab9f58416cbc28039a00d",
+          "function": ""
+        },
+        "attestations": []
+      },
+      {
+        "id": "E-2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "case": "C2",
+        "requirement": "R2",
+        "created_by": "A1",
+        "date": "2026-10-02",
+        "basis_hash": "f9b865a965ec0b68cbd113686c49b9539c5db815be5fe14552b8bc9ea8a7baca",
+        "value": {
+          "value": 55.0,
+          "unit": "degC"
+        },
+        "uncertainty": {
+          "value": 2.0,
+          "unit": "degC"
+        },
+        "provenance": {
+          "node": "SYS.x",
+          "input_hash": "b78fd19e1a91ab52eafae9a878c08654899c2a6d87cab9f58416cbc28039a00d",
+          "function": ""
+        },
+        "attestations": []
+      }
+    ],
+    "approvals": [
+      {
+        "id": "APR-R1-1",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "R1",
+        "content_hash": "51c3c0b86cff02b1c0bbad207e1da6747aaa81f727a2b764a3e384567b3f0b9b",
+        "principal": "H1",
+        "date": "2026-10-01",
+        "note": ""
+      },
+      {
+        "id": "APR-C1-2",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "C1",
+        "content_hash": "c447109dd2243395947cbad069fb5f37d9402b12080a07fea54b453f94b10fe0",
+        "principal": "H1",
+        "date": "2026-10-01",
+        "note": ""
+      },
+      {
+        "id": "APR-R2-3",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "R2",
+        "content_hash": "f4cb6e4e95eade44661028e43b486fef8119445a98ece2fb89b088ea581d0ccf",
+        "principal": "H1",
+        "date": "2026-10-01",
+        "note": ""
+      },
+      {
+        "id": "APR-C2-4",
+        "name": "",
+        "doc": "",
+        "withdrawn": false,
+        "element": "C2",
+        "content_hash": "615d8949b0519a514c73b6b5b9bd7fe349420efb8aefdd2a01c8984812a781f7",
+        "principal": "H1",
+        "date": "2026-10-01",
+        "note": ""
+      }
+    ],
+    "baselines": [],
+    "statements": [],
+    "design_rules": [],
+    "concepts": [],
+    "trade_studies": [],
+    "load_cases": [],
+    "failure_modes": [],
+    "optimizations": [],
+    "allowables": [],
+    "credibility": [],
+    "reviews": [],
+    "consistency_checks": []
+  },
+  "expected": {
+    "validation_errors": [],
+    "content_hashes": {
+      "H1": "c015d52cd59721dd30fea6e3447fd90e712c4f4803e24c624bf82377f69b620c",
+      "A1": "0f85909f29e8148d04d5cfc942e773c0d5f6564f03603b15f1c8e77102b959ea",
+      "T1": "6c95c9c600912e05475ce88c0edab69db13361b336088385cfecb920c0ad01a2",
+      "N1": "87539e4584f8cb34117a4957734e5811f63e80c4fbd25f3e1a28def47be2e200",
+      "SYS": "3cc5d49bfa74c5cf5de22558147b80d25105d9469fbfb6b5f8580bc5413e2e85",
+      "R1": "51c3c0b86cff02b1c0bbad207e1da6747aaa81f727a2b764a3e384567b3f0b9b",
+      "R2": "f4cb6e4e95eade44661028e43b486fef8119445a98ece2fb89b088ea581d0ccf",
+      "C1": "c447109dd2243395947cbad069fb5f37d9402b12080a07fea54b453f94b10fe0",
+      "C2": "615d8949b0519a514c73b6b5b9bd7fe349420efb8aefdd2a01c8984812a781f7",
+      "rel-1": "335cf1452dcbc6c6ef3d9ee74ea146c7dc75ef07180d5201a6ce00ee16ea51e4",
+      "rel-2": "216c43fb9fa11ce736115018daaf96ffcf50d67c17bae9d527466680d55745dc",
+      "rel-3": "ac97d09f28eb0f94fbd07a670c28c3e06bfae97236f38f2a01c0a07174942f94",
+      "rel-4": "14a3318d33815c9f6b241ddbb35b5ddb9d17b3efc71b8f2ef4916a381c68d768",
+      "rel-5": "78376d481b7fc5c9a69ffc374f2960b6d4dd13669c88376e67bc975ccf91e76f",
+      "rel-6": "6fa24122cc5813270e2d627ce9cb2de9fc870a3f10d78bc6e2d37e315c75725f",
+      "E-1": "76bb05ab03919f900c0e7d6fd5e6a7765680fcdd024afd739c9b3fc3044b23b2",
+      "E-2": "ed8e9e0482ac386fd84da2f8d2835d6c46f205dc53de6364989373502a6f7184",
+      "APR-R1-1": "473acf4c57d62d812403141ee59b954be423e684f40e136df875b421d2bef003",
+      "APR-C1-2": "0245feac002c4fedf8ba670be0ee1628762391f4b9abf1887fde891ccc00d288",
+      "APR-R2-3": "b4b010d8ca7ef623f0f6768830f840fbcc597c0449dd9e77306f196da4383145",
+      "APR-C2-4": "9924194868ab2277a3d3af8cd6d03257fa3c431e2a59bca9d6ca8051c7fb2feb"
+    },
+    "basis_hashes": {
+      "R1|C1": "c66fe7bdfeade346ac45ede49e49ade336191075a2dca6f9e9cad135287098ee",
+      "R2|C2": "f9b865a965ec0b68cbd113686c49b9539c5db815be5fe14552b8bc9ea8a7baca"
+    },
+    "assessment": [
+      {
+        "requirement": "R1",
+        "verification": "VERIFIED",
+        "satisfaction": "SATISFIED",
+        "margin_si": 0.3999999999999999,
+        "derived": [],
+        "reasons": [],
+        "cases": [
+          {
+            "case": "C1",
+            "status": "VERIFIED",
+            "deciding_evidence": "E-1",
+            "reasons": [],
+            "evidence": [
+              {
+                "evidence": "E-1",
+                "outcome": "pass",
+                "margin_si": 0.3999999999999999,
+                "reasons": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "requirement": "R2",
+        "verification": "INCOMPLETE",
+        "satisfaction": "OPEN",
+        "margin_si": null,
+        "derived": [],
+        "reasons": [
+          "EVIDENCE_INVALID"
+        ],
+        "cases": [
+          {
+            "case": "C2",
+            "status": "INCOMPLETE",
+            "deciding_evidence": "E-2",
+            "reasons": [
+              "EVIDENCE_INVALID"
+            ],
+            "evidence": [
+              {
+                "evidence": "E-2",
+                "outcome": "invalid",
+                "margin_si": null,
+                "reasons": [
+                  "EVIDENCE_INVALID"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

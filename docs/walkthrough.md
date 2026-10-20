@@ -1,7 +1,8 @@
 # Walkthrough
 
 A 10-minute tour of the repository: what each layer does, in the order you meet it, with one
-command per step. Run everything from the repo root after `python -m pip install -e '.[dev]'`.
+command per step. Run everything from the repo root after `python -m pip install -e .`; only the
+ontology and MCP steps need an extra.
 
 ## 1. The idea in one paragraph
 
@@ -23,9 +24,8 @@ the approvals, attestations and tool declarations.
 | `process/` | Stage template, completeness/consistency rules (PR-*), stage status | `status.py` (`evaluate_process`) |
 | `agents/` | Roles with write permissions, orchestrator, callable and prompt backends | `orchestrator.py` (`plan`, `apply`, `run`) |
 | `mcp/` | MCP server over the model and process layer (read and dry-run only) | `tools.py` |
-| `engineering/` | Analytic rules, 2-D geometry and CAD export, solver runner, decisions | `verification.py` |
-| `interchange/` | Requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, viewer, review package | `ontology.py`, `requirement_io.py` |
-| `domains/` | The enclosure example built on the graph core | `enclosure.py` |
+| `engineering/` | External solver runner, trial sizing controller | `solver.py` |
+| `interchange/` | Requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, graph viewer | `ontology.py`, `requirement_io.py` |
 
 Layers depend downward only: `agents` → `process` → `model`; `core` knows nothing about any of them.
 
@@ -35,15 +35,15 @@ Layers depend downward only: `agents` → `process` → `model`; `core` knows no
 references, dimension mismatches, agents holding human-only roles).
 
 ```sh
-dg model validate examples/model_enclosure.yaml
+dg model validate examples/model_system.yaml
 ```
 
 **What is verified?** Each requirement gets a verification status (`VERIFIED`, `FAILED`, `STALE`,
 ...) and a satisfaction status (`SATISFIED`, `OPEN`, `BLOCKED`, ...) with machine-readable reasons.
 
 ```sh
-dg model assess examples/model_enclosure.yaml
-dg model matrix examples/model_enclosure.yaml
+dg model assess examples/model_system.yaml
+dg model matrix examples/model_system.yaml
 ```
 
 **What should happen next?** The process layer evaluates each stage (requirements → concepts →
@@ -70,14 +70,15 @@ elements but not the author's reasoning. See `tests/process/test_orchestrator.py
 tools (pySHACL, TopBraid, Protégé, a SPARQL store).
 
 ```sh
-dg model export-rdf examples/model_enclosure.yaml -o build/enclosure.ttl --check
+dg model export-rdf examples/model_system.yaml -o build/system.ttl --check
 ```
 
-**The graph core** is independent of all of the above: typed rules with provenance, used by the
-enclosure example.
+**The graph core** is independent of all of the above: typed rules with provenance and input
+hashes. `evidence_from_graph` (`model/baseline.py`) turns an evaluated node into model evidence,
+bound to the current basis hash. A serialized graph opens in an offline viewer:
 
 ```sh
-dg run examples/board_a.yaml --no-solvers --output-dir build/board_a
+dg view graph.json
 ```
 
 ## 4. Driving it from an agent (MCP)
@@ -105,7 +106,6 @@ errors whose text is JSON with a `code` (`PATH_OUTSIDE_ROOT`, `MODEL_INVALID`, `
 
 ## 5. Where to go next
 
-- `docs/design/universal-design-graph.md`: goals, the assurance review (section 7) and the plan.
 - `ontology/design-graph.ttl`: the vocabulary, readable in any OWL editor.
-- `examples/tutorial.md`: the enclosure graph in more depth.
+- `conformance/verification-semantics.md`: the hashing and assessment rules, with golden vectors.
 - `tests/model/helpers.py` and `tests/process/proc_helpers.py`: the smallest complete models.

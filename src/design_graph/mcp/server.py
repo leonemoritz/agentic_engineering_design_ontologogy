@@ -31,8 +31,8 @@ from design_graph.mcp.tools import (
     Workspace,
 )
 
-INSTRUCTIONS = """Design Intent Graph: an MBSE system model (YAML) with derived verification status
-and a process layer that turns missing work into open items.
+INSTRUCTIONS = """Agentic Engineering Design Ontology: an MBSE system model (YAML) with derived
+verification status and a process layer that turns missing work into open items.
 
 Paths are relative to the server's workspace root. Typical loop:
 1. get_process_status -> which stage is actionable and what blocks it.
@@ -135,6 +135,6 @@ def build_server(root: str | Path = ".") -> MCPServer:
     help="Workspace root; tools read files only below it.",
 )
 def main(root: Path) -> None:
-    """Run the Design Intent Graph MCP server over stdio."""
+    """Run the Agentic Engineering Design Ontology MCP server over stdio."""
 
     build_server(root).run("stdio")

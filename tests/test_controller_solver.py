@@ -14,9 +14,6 @@ from design_graph import (
     Lever,
     SizingController,
     SolverTimeout,
-    TierValidity,
-    decide,
-    replay,
     rule,
     run_solver,
 )
@@ -33,47 +30,6 @@ def calculate_margin(thickness_mm: float) -> Margin:
 
 def make_sizing_graph() -> Graph:
     return Graph().add("margin", calculate_margin, {"thickness_mm": 1.0})
-
-
-def test_decisions_replay_and_unresolved_results_stay_open() -> None:
-    result = decide(
-        item="synthetic-frequency",
-        tier="rule",
-        value=90.0,
-        limit=100.0,
-        relation="max",
-        validity=TierValidity(minimum=10.0, maximum=200.0, uncertainty=3.0),
-    )
-    assert result.verdict == "PASS"
-    assert result.margin == 7.0
-    assert replay(result) == result
-
-    unresolved = decide(
-        item="synthetic-modal",
-        tier="FE",
-        value=20.0,
-        limit=15.0,
-        relation="max",
-        validity=TierValidity(),
-        resolved=False,
-    )
-    assert unresolved.verdict == "OPEN"
-    assert unresolved.margin is None
-    assert replay(unresolved).verdict == "OPEN"
-
-
-def test_out_of_validity_requests_higher_tier_only_when_enabled() -> None:
-    result = decide(
-        item="synthetic-aperture",
-        tier="rule",
-        value=900.0,
-        limit=1000.0,
-        relation="max",
-        validity=TierValidity(maximum=500.0),
-        higher_tier_enabled=True,
-    )
-    assert result.verdict == "NEEDS-HIGHER-TIER"
-    assert replay(result).verdict == result.verdict
 
 
 def test_controller_keeps_only_improving_trials() -> None:

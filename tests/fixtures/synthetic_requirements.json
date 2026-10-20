@@ -1,10 +1,11 @@
 {
   "requirements": [
     {
-      "id": "SYN-JSON-1",
-      "kind": "frequency_max_Hz",
-      "params": {"value": 2000000},
-      "quote": "The protected frequency range extends to 2 MHz.",
+      "id": "R1",
+      "quote": "SYS shall have x <= 3.",
+      "attribute": "x",
+      "relation": "le",
+      "value": 3,
       "method": "A"
     }
   ]

@@ -1,0 +1,45 @@
+{
+  "suite": "design-graph-verification/0.1",
+  "units": {
+    "": {
+      "factor": 1.0,
+      "offset": 0.0,
+      "dimension": {}
+    },
+    "m": {
+      "factor": 1.0,
+      "offset": 0.0,
+      "dimension": {
+        "length": 1
+      }
+    },
+    "mm": {
+      "factor": 0.001,
+      "offset": 0.0,
+      "dimension": {
+        "length": 1
+      }
+    },
+    "K": {
+      "factor": 1.0,
+      "offset": 0.0,
+      "dimension": {
+        "temperature": 1
+      }
+    },
+    "degC": {
+      "factor": 1.0,
+      "offset": 273.15,
+      "dimension": {
+        "temperature": 1
+      }
+    },
+    "delta_degC": {
+      "factor": 1.0,
+      "offset": 0.0,
+      "dimension": {
+        "temperature": 1
+      }
+    }
+  }
+}
