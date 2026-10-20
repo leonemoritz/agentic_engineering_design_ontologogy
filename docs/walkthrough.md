@@ -80,7 +80,7 @@ dg process status build/model.yaml --template templates/requirements-engineering
 Open CASCADE, Gmsh, CalculiX, OpenFOAM, ...) as a separate process on a deck you wrote. It fills
 the deck's placeholders from part attributes and reads the tool's outputs. `--record` turns one
 output into evidence, bound to the requirement, the case and the run's input hash. The connectors
-are not yet tested against real tool installations; see the README.
+are mostly untested against real tool installations (FreeCAD is tested); see the README.
 
 ```sh
 dg connectors list
@@ -129,5 +129,7 @@ errors whose text is JSON with a `code` (`PATH_OUTSIDE_ROOT`, `MODEL_INVALID`, `
 ## 5. Where to go next
 
 - `ontology/design-graph.ttl`: the vocabulary, readable in any OWL editor.
+- `docs/binding-3dexperience-grasshopper.md`: how the ontology would bind to 3DEXPERIENCE and
+  Rhino/Grasshopper (a design, not yet implemented).
 - `conformance/verification-semantics.md`: the hashing and assessment rules, with golden vectors.
 - `tests/model/helpers.py` and `tests/process/proc_helpers.py`: the smallest complete models.

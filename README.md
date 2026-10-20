@@ -19,7 +19,9 @@ rules that decide when a design counts as verified. Tools sit behind that bounda
 open-source CAx tools connect through thin [connectors](#cax-connectors) that run each tool as a
 separate executable and turn one named output into evidence. The connectors do not build models
 for you: you write the deck, script or case, and the connector stages, runs and reads it. There is
-no loader for declarative graph specs yet, and commercial tools are not connected.
+no loader for declarative graph specs yet, and commercial tools are not connected; how the
+ontology would bind to 3DEXPERIENCE and Rhino/Grasshopper is designed in
+[docs/binding-3dexperience-grasshopper.md](docs/binding-3dexperience-grasshopper.md).
 
 ## Quick start
 
@@ -172,12 +174,13 @@ work directory and fills its placeholders from parameters. It then runs the tool
 `run_solver` and reads the tool's own output files into named quantities. A run is reused while
 the rendered inputs, parameters and command are unchanged.
 
-> **Untested against the real tools.** The connectors have not yet been run against real
-> installations of these tools. The test suite drives them with fake executables that write each
-> tool's output format. The command lines (flags such as `kicad-cli pcb drc --format json`,
-> `gmsh -format msh41`, `ccx -v`) follow each tool's documented usage but are unverified. Run one
-> known case per tool and check the outputs before you rely on a connector for evidence. Reports
-> and fixes are welcome.
+> **Mostly untested against the real tools.** FreeCAD is the exception: it has been used end to
+> end through the FreeCAD MCP in the [linked example](https://www.moritzvalentino.de/blog/engineering-ontology-for-agentic-design).
+> The other connectors have not yet been run against real installations. The test suite drives them
+> with fake executables that write each tool's output format. Their command lines (flags such as
+> `kicad-cli pcb drc --format json`, `gmsh -format msh41`, `ccx -v`) follow each tool's documented
+> usage but are unverified. Run one known case per tool and check the outputs before you rely on a
+> connector for evidence. Reports and fixes are welcome.
 
 | Connector | Tool | Kind | You provide | Outputs |
 |---|---|---|---|---|
@@ -291,7 +294,7 @@ src/design_graph/
   interchange/   requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, graph viewer
   engineering/   external solver runner, trial sizing controller
   connectors/    connectors to ten open-source CAx tools, output readers, evidence bridge
-docs/            walkthrough
+docs/            walkthrough; binding design for 3DEXPERIENCE and Rhino/Grasshopper
 templates/       requirement-card template and requirements-engineering process template
 ontology/        generated OWL vocabulary and SHACL shapes (Turtle)
 conformance/     verification semantics spec, golden vectors, independent checker
