@@ -262,6 +262,73 @@ def model_import_cards(card_file: Path, subject: str, need: str, output: Path) -
     click.echo(f"Imported {len(model.requirements)} requirements into {output}")
 
 
+_RDF_FORMAT = click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["ttl", "jsonld", "xml", "nt"]),
+    default="ttl",
+    show_default=True,
+    help="RDF serialization.",
+)
+
+
+@model_group.command("export-rdf")
+@click.argument("model_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("-o", "--output", required=True, type=click.Path(dir_okay=False, path_type=Path))
+@_RDF_FORMAT
+@click.option(
+    "--base",
+    default="urn:design-graph:element:",
+    show_default=True,
+    help="IRI prefix for element ids.",
+)
+@click.option("--check", is_flag=True, help="Validate the data against the SHACL shapes.")
+def model_export_rdf(model_file: Path, output: Path, fmt: str, base: str, check: bool) -> None:
+    """Export a model as RDF instance data of the design-graph ontology (`ontology` extra)."""
+
+    from design_graph.interchange.ontology import check_conformance, model_graph, serialize
+    from design_graph.model import ModelError, load_model
+
+    try:
+        graph = model_graph(load_model(model_file), base=base)
+        output.write_text(serialize(graph, fmt), encoding="utf-8")
+    except (ModelError, OSError) as error:
+        raise click.ClickException(str(error)) from error
+    click.echo(f"{len(graph)} triples: {output}")
+    if check:
+        conforms, report = check_conformance(graph)
+        if not conforms:
+            click.echo(report, err=True)
+            raise click.exceptions.Exit(1)
+        click.echo("SHACL: conforms")
+
+
+@main.group("ontology")
+def ontology_group() -> None:
+    """The formal ontology: OWL vocabulary and SHACL shapes."""
+
+
+@ontology_group.command("export")
+@click.option(
+    "-o",
+    "--output-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("ontology"),
+    show_default=True,
+)
+@_RDF_FORMAT
+def ontology_export(output_dir: Path, fmt: str) -> None:
+    """Write the OWL vocabulary and the SHACL shapes (`ontology` extra)."""
+
+    from design_graph.interchange.ontology import NOT_EXPRESSED, write_ontology
+
+    for path in write_ontology(output_dir, fmt):
+        click.echo(str(path))
+    click.echo("Checked in Python only (not expressed in OWL/SHACL):")
+    for line in NOT_EXPRESSED:
+        click.echo(f"  - {line}")
+
+
 @main.group("process")
 def process_group() -> None:
     """Process layer: stage status, open items, and agent task plans."""

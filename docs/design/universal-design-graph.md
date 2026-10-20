@@ -58,7 +58,7 @@ Layers depend only downward; `core` stays domain-neutral. `domains/enclosure` be
 - Replaces `_UNIT_SCALE` and the regex.
 
 ### 3.2 MBSE requirements model (G3, G4)
-Requirements are elements of a small system model, aligned with SysML v2 concepts (definition/usage split, typed relationships), not rows in a table. The model is native Pydantic/JSON; SysML v2 JSON/API and ReqIF are import/export mappings, not the internal format.
+Requirements are elements of a small system model, aligned with SysML v2 concepts (definition/usage split, typed relationships), not rows in a table. The model is native Pydantic/JSON; SysML v2 JSON/API and ReqIF are import/export mappings, not the internal format. The model is also published as an OWL 2 ontology with SHACL shapes, generated from the classes (section 8.6).
 
 **Elements** (all have stable `id`, `name`, `doc`, `status`, `version`, metadata):
 ```
@@ -319,7 +319,29 @@ The orchestrator follows these rules:
   `evaluate`, `explain_node`, `set_binding`) wait for phases 4 and 5; a write path for reviewed
   proposals; audit logging of tool calls.
 
-### 8.6 Not implemented yet
+### 8.6 Formal ontology export (`interchange/ontology.py`)
+The OWL 2 vocabulary (`ontology/design-graph.ttl`), the SHACL Core shapes
+(`ontology/design-graph-shapes.ttl`) and RDF instance data (`dg model export-rdf`) are generated
+from the Pydantic classes, so they cannot drift from the model:
+- Element classes are subclasses of `dg:Element`; nested values (quantities, attestations, criteria)
+  are classes of their own, written as typed blank nodes. `dg:Quantity` is a subclass of
+  `qudt:QuantityValue`. `dict` fields become `dg:Entry` nodes with a key.
+- Each field maps to one property. A name that would be an object property in one class and a
+  datatype property in another is renamed (`Quantity.value` becomes `dg:numericValue`;
+  `source` becomes `dg:sourceText` on statements and allowables), and generation fails on any new
+  conflict. Reference fields need a declared range, so a new reference field fails loudly too.
+- Relationships are kept as reified `dg:Relationship` individuals and also written as direct
+  triples. `derive`, `refine`, `satisfy`, `verify` and `allocate` are subproperties of `dg:trace`,
+  following SysML v2.
+- The shapes mirror the structural rules of `validate_model` and are never stricter, so a model
+  without validation errors conforms. References that validation does not check get an OWL range but
+  no SHACL class constraint. Tests check that broken models are rejected by both validators.
+- Not expressed, and listed in the ontology header (F13): derived status, hash pinning and
+  staleness, units, cycles, relation-dependent requirement rules, trade-study and consistency
+  checks, and list order.
+- Open: register `https://w3id.org/design-graph/` with w3id.org; map to the SysML v2 library IRIs.
+
+### 8.7 Not implemented yet
 - Credibility thresholds per requirement criticality (F1 policy).
 - A margin policy (F5).
 - Concurrent tasks within a round.

@@ -87,6 +87,35 @@ report = Orchestrator(model, PromptBackend(my_complete)).run()
 report.status.stages, report.records, report.human_actions
 ```
 
+## Formal ontology (OWL 2 and SHACL)
+
+The system model is published as a formal ontology in `ontology/`:
+
+- `design-graph.ttl`: OWL 2 vocabulary: 22 element classes under `dg:Element`, 9 nested
+  value classes such as `dg:Quantity` (aligned to `qudt:QuantityValue`), object and datatype properties
+  with domains and ranges, and the relationship properties `dg:derive`, `dg:refine`,
+  `dg:satisfy`, `dg:verify` and `dg:allocate` as subproperties of `dg:trace`.
+- `design-graph-shapes.ttl`: SHACL Core shapes for required fields, cardinalities, datatypes,
+  enumerations, id patterns, reference targets, relationship endpoints, human-only approvals and
+  tool declarations, and reviewer independence.
+
+Both files are generated from the Pydantic classes, and a test fails if they are out of date. The
+shapes are never stricter than `dg model validate`, so a model that validates also conforms. Each
+broken model in the tests is rejected by both. Rules that SHACL Core cannot express (derived
+status, hash pinning, units, cycles, ...) stay in Python and are listed in the ontology header.
+
+```sh
+python -m pip install -e '.[ontology]'
+dg ontology export -o ontology                     # regenerate vocabulary and shapes
+dg model export-rdf examples/model_enclosure.yaml -o enclosure.ttl --check   # data + SHACL
+dg model export-rdf examples/model_enclosure.yaml -o enclosure.jsonld --format jsonld
+```
+
+Elements become individuals `<base><id>` (default base `urn:design-graph:element:`; set it with
+`--base`). Relationships are exported both as `dg:Relationship` individuals and as direct triples
+such as `el:ENCL dg:satisfy el:R-MASS`. The namespace `https://w3id.org/design-graph/` is not yet
+registered with w3id.org.
+
 ## MCP server
 
 `design-graph-mcp` exposes the system model and process layer to agents over MCP (stdio). It needs
@@ -115,9 +144,10 @@ src/design_graph/
   agents/        roles, orchestrator, callable and prompt backends
   mcp/           MCP server over the model and process layer (read and dry-run only)
   engineering/   analysis rules, geometry/CAD, connectors, solver runner, decision records, controller
-  interchange/   requirement import (JSON/YAML/ReqIF), viewer, report, HTML assets
+  interchange/   requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, viewer, report
   domains/       example domain plug-ins (enclosure)
 docs/            walkthrough; design/ holds the design document
+ontology/        generated OWL vocabulary and SHACL shapes (Turtle)
 examples/        synthetic example inputs
 tests/           pytest suite (tests/model for the system model)
 ```

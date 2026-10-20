@@ -24,7 +24,7 @@ the approvals, attestations and tool declarations.
 | `agents/` | Roles with write permissions, orchestrator, callable and prompt backends | `orchestrator.py` (`plan`, `apply`, `run`) |
 | `mcp/` | MCP server over the model and process layer (read and dry-run only) | `tools.py` |
 | `engineering/` | Analytic rules, 2-D geometry and CAD export, solver runner, decisions | `verification.py` |
-| `interchange/` | Requirement import (JSON/YAML/ReqIF), HTML viewer, review package | `requirement_io.py` |
+| `interchange/` | Requirement import (JSON/YAML/ReqIF), OWL/SHACL/RDF export, viewer, review package | `ontology.py`, `requirement_io.py` |
 | `domains/` | The enclosure example built on the graph core | `enclosure.py` |
 
 Layers depend downward only: `agents` → `process` → `model`; `core` knows nothing about any of them.
@@ -65,6 +65,14 @@ In Python, `Orchestrator(model, backend).run()` executes those tasks: each propo
 permissions and new validation errors, then reviewed by the quality role, which sees the changed
 elements but not the author's reasoning. See `tests/process/test_orchestrator.py`.
 
+**As a formal ontology.** The model's classes are published as OWL 2 with SHACL shapes in
+`ontology/`. Any model exports as RDF data and can be checked against the shapes with standard
+tools (pySHACL, TopBraid, Protégé, a SPARQL store).
+
+```sh
+dg model export-rdf examples/model_enclosure.yaml -o build/enclosure.ttl --check
+```
+
 **The graph core** is independent of all of the above: typed rules with provenance, used by the
 enclosure example.
 
@@ -98,5 +106,6 @@ errors whose text is JSON with a `code` (`PATH_OUTSIDE_ROOT`, `MODEL_INVALID`, `
 ## 5. Where to go next
 
 - `docs/design/universal-design-graph.md`: goals, the assurance review (section 7) and the plan.
+- `ontology/design-graph.ttl`: the vocabulary, readable in any OWL editor.
 - `examples/tutorial.md`: the enclosure graph in more depth.
 - `tests/model/helpers.py` and `tests/process/proc_helpers.py`: the smallest complete models.
